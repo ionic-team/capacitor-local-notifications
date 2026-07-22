@@ -112,13 +112,6 @@ class LocalNotificationManager(
                 call?.let { LocalNotificationsError.MISSING_IDENTIFIER.reject(it) }
                 return null
             }
-            // Reject a past scheduled time (parity with iOS; no silent drop).
-            val at = localNotification.schedule?.at
-            if (at != null && at.time < Date().time) {
-                if (call == null) continue // restore path: skip stray past-dated entries
-                LocalNotificationsError.SCHEDULE_IN_PAST.reject(call)
-                return null
-            }
             dismissVisibleNotification(id)
             cancelTimerForNotification(id)
             buildNotification(notificationManager, localNotification, call)
@@ -292,7 +285,8 @@ class LocalNotificationManager(
         val at = schedule.at
         if (at != null) {
             if (at.time < Date().time) {
-                Logger.error(Logger.tags("LN"), "Scheduled time must be *after* current time", null)
+                // Legacy behavior: a past scheduled time fires the notification immediately.
+                setExactIfPossible(alarmManager, schedule, Date().time, pendingIntent)
                 return
             }
             if (schedule.isRepeating()) {
