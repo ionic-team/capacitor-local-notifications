@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LocalNotif (Capacitor)</string>
+    <string name="title_activity_main">LocalNotif (Capacitor)</string>
+    <string name="package_name">com.outsystems.test.localnotifications</string>
+    <string name="custom_url_scheme">com.outsystems.test.localnotifications</string>
+</resources>

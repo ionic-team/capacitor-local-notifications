@@ -1,6 +1,7 @@
+.idea/
 node_modules/
-ios/
-android/
-dist/
-*.log
+.vscode/
+*.map
 .DS_Store
+.sourcemaps
+dist/
