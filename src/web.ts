@@ -4,11 +4,15 @@ import type { PermissionState } from '@capacitor/core';
 import type {
   DeliveredNotifications,
   EnabledResult,
+  GetAllOptions,
+  GetByIdsOptions,
+  GetNotificationsResult,
   ListChannelsResult,
   LocalNotificationSchema,
   LocalNotificationsPlugin,
   PendingResult,
   PermissionStatus,
+  RemoveByIdsOptions,
   ScheduleOptions,
   ScheduleResult,
   SettingsPermissionStatus,
@@ -39,11 +43,47 @@ export class LocalNotificationsWeb extends WebPlugin implements LocalNotificatio
       this.deliveredNotifications = this.deliveredNotifications.filter(() => !found);
     }
   }
+  async removeDeliveredNotificationsById(options: RemoveByIdsOptions): Promise<void> {
+    for (const id of options.ids) {
+      const found = this.deliveredNotifications.find((n) => n.tag === String(id));
+      found?.close();
+      this.deliveredNotifications = this.deliveredNotifications.filter((n) => n !== found);
+    }
+  }
   async removeAllDeliveredNotifications(): Promise<void> {
     for (const notification of this.deliveredNotifications) {
       notification.close();
     }
     this.deliveredNotifications = [];
+  }
+
+  async getByIds(options: GetByIdsOptions): Promise<GetNotificationsResult> {
+    const ids = options.ids.map((id) => String(id));
+    const scheduled = this.pending.filter((n) => ids.includes(String(n.id)));
+    const delivered = this.deliveredNotifications
+      .filter((n) => ids.includes(n.tag))
+      .map((n) => this.deliveredToSchema(n));
+    return { notifications: [...scheduled, ...delivered] };
+  }
+
+  async getAll(options?: GetAllOptions): Promise<GetNotificationsResult> {
+    const scheduled = [...this.pending];
+    const delivered = this.deliveredNotifications.map((n) => this.deliveredToSchema(n));
+    if (options?.state === 'SCHEDULED') {
+      return { notifications: scheduled };
+    }
+    if (options?.state === 'TRIGGERED') {
+      return { notifications: delivered };
+    }
+    return { notifications: [...scheduled, ...delivered] };
+  }
+
+  protected deliveredToSchema(notification: Notification): LocalNotificationSchema {
+    return {
+      title: notification.title,
+      id: parseInt(notification.tag),
+      body: notification.body,
+    };
   }
   async createChannel(): Promise<void> {
     throw this.unimplemented('Not implemented on web.');
@@ -73,10 +113,36 @@ export class LocalNotificationsWeb extends WebPlugin implements LocalNotificatio
     };
   }
 
+  async update(options: ScheduleOptions): Promise<ScheduleResult> {
+    if (!this.hasNotificationSupport()) {
+      throw this.unavailable('Notifications not supported in this browser.');
+    }
+
+    const updated: LocalNotificationSchema[] = [];
+    for (const notification of options.notifications) {
+      const index = this.pending.findIndex((n) => n.id === notification.id);
+      if (index === -1) {
+        // Only update notifications that are already scheduled.
+        continue;
+      }
+      this.pending.splice(index, 1);
+      this.sendNotification(notification);
+      updated.push(notification);
+    }
+
+    return {
+      notifications: updated.map((notification) => ({ id: notification.id })),
+    };
+  }
+
   async getPending(): Promise<PendingResult> {
     return {
       notifications: this.pending,
     };
+  }
+
+  async cancelAll(): Promise<void> {
+    this.pending = [];
   }
 
   async registerActionTypes(): Promise<void> {

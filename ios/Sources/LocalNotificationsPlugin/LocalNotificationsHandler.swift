@@ -29,6 +29,13 @@ public class LocalNotificationsHandler: NSObject, NotificationHandlerProtocol {
         self.plugin?.notifyListeners("localNotificationReceived", data: notificationData)
 
         if let options = notificationRequestLookup[notification.request.identifier] {
+            // `foreground` takes precedence over `silent` when both are provided.
+            if let foreground = options["foreground"] as? Bool {
+                if foreground {
+                    return [.badge, .sound, .banner, .list]
+                }
+                return UNNotificationPresentationOptions.init(rawValue: 0)
+            }
             let silent = options["silent"] as? Bool ?? false
             if silent {
                 return UNNotificationPresentationOptions.init(rawValue: 0)
@@ -100,6 +107,12 @@ public class LocalNotificationsHandler: NSObject, NotificationHandlerProtocol {
         notification["sound"] = notificationRequest["sound"]  ?? ""
         notification["actionTypeId"] = request.content.categoryIdentifier
         notification["attachments"] = notificationRequest["attachments"]  ?? []
+        if let badge = request.content.badge {
+            notification["badge"] = badge.intValue
+        }
+        if let foreground = notificationRequest["foreground"] as? Bool {
+            notification["foreground"] = foreground
+        }
         return notification
 
     }

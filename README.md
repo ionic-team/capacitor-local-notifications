@@ -94,13 +94,18 @@ If the device has entered [Doze](https://developer.android.com/training/monitori
 <docgen-index>
 
 * [`schedule(...)`](#schedule)
+* [`update(...)`](#update)
 * [`getPending()`](#getpending)
 * [`registerActionTypes(...)`](#registeractiontypes)
 * [`cancel(...)`](#cancel)
+* [`cancelAll()`](#cancelall)
 * [`areEnabled()`](#areenabled)
 * [`getDeliveredNotifications()`](#getdeliverednotifications)
 * [`removeDeliveredNotifications(...)`](#removedeliverednotifications)
+* [`removeDeliveredNotificationsById(...)`](#removedeliverednotificationsbyid)
 * [`removeAllDeliveredNotifications()`](#removealldeliverednotifications)
+* [`getByIds(...)`](#getbyids)
+* [`getAll(...)`](#getall)
 * [`createChannel(...)`](#createchannel)
 * [`deleteChannel(...)`](#deletechannel)
 * [`listChannels()`](#listchannels)
@@ -128,6 +133,11 @@ schedule(options: ScheduleOptions) => Promise<ScheduleResult>
 
 <a href="#schedule">Schedule</a> one or more local notifications.
 
+On both platforms this now requests the notification permission it needs
+before scheduling if it has not been granted yet (Android 13+
+`POST_NOTIFICATIONS`, iOS `UNUserNotificationCenter` authorization). Apps
+that already call `requestPermissions()` beforehand are unaffected.
+
 | Param         | Type                                                        |
 | ------------- | ----------------------------------------------------------- |
 | **`options`** | <code><a href="#scheduleoptions">ScheduleOptions</a></code> |
@@ -135,6 +145,28 @@ schedule(options: ScheduleOptions) => Promise<ScheduleResult>
 **Returns:** <code>Promise&lt;<a href="#scheduleresult">ScheduleResult</a>&gt;</code>
 
 **Since:** 1.0.0
+
+--------------------
+
+
+### update(...)
+
+```typescript
+update(options: ScheduleOptions) => Promise<ScheduleResult>
+```
+
+Update one or more previously scheduled local notifications, matched by `id`.
+
+Notifications whose `id` is not currently scheduled are ignored. Like
+`schedule`, this requests the notification permission if needed.
+
+| Param         | Type                                                        |
+| ------------- | ----------------------------------------------------------- |
+| **`options`** | <code><a href="#scheduleoptions">ScheduleOptions</a></code> |
+
+**Returns:** <code>Promise&lt;<a href="#scheduleresult">ScheduleResult</a>&gt;</code>
+
+**Since:** 8.0.0
 
 --------------------
 
@@ -190,6 +222,19 @@ Cancel pending notifications.
 --------------------
 
 
+### cancelAll()
+
+```typescript
+cancelAll() => Promise<void>
+```
+
+Cancel all pending (scheduled) notifications.
+
+**Since:** 8.0.0
+
+--------------------
+
+
 ### areEnabled()
 
 ```typescript
@@ -237,6 +282,28 @@ Remove the specified notifications from the notifications screen.
 --------------------
 
 
+### removeDeliveredNotificationsById(...)
+
+```typescript
+removeDeliveredNotificationsById(options: RemoveByIdsOptions) => Promise<void>
+```
+
+Remove the specified delivered notifications from the notifications screen,
+matched by `id`.
+
+Id-based counterpart of `removeDeliveredNotifications`, so callers that only
+have identifiers (e.g. the OutSystems `ClearNotifications` action) can map to
+a single method call.
+
+| Param         | Type                                                              |
+| ------------- | ----------------------------------------------------------------- |
+| **`options`** | <code><a href="#removebyidsoptions">RemoveByIdsOptions</a></code> |
+
+**Since:** 8.0.0
+
+--------------------
+
+
 ### removeAllDeliveredNotifications()
 
 ```typescript
@@ -246,6 +313,49 @@ removeAllDeliveredNotifications() => Promise<void>
 Remove all the notifications from the notifications screen.
 
 **Since:** 4.0.0
+
+--------------------
+
+
+### getByIds(...)
+
+```typescript
+getByIds(options: GetByIdsOptions) => Promise<GetNotificationsResult>
+```
+
+Get the notifications matching the supplied identifiers, whether they are
+still scheduled (pending) or already delivered.
+
+| Param         | Type                                                        |
+| ------------- | ----------------------------------------------------------- |
+| **`options`** | <code><a href="#getbyidsoptions">GetByIdsOptions</a></code> |
+
+**Returns:** <code>Promise&lt;<a href="#getnotificationsresult">GetNotificationsResult</a>&gt;</code>
+
+**Since:** 8.0.0
+
+--------------------
+
+
+### getAll(...)
+
+```typescript
+getAll(options?: GetAllOptions | undefined) => Promise<GetNotificationsResult>
+```
+
+Get all notifications known to the plugin, optionally filtered by state.
+
+When `state` is omitted both scheduled and delivered notifications are
+returned. `SCHEDULED` returns pending notifications; `TRIGGERED` returns
+delivered notifications.
+
+| Param         | Type                                                    |
+| ------------- | ------------------------------------------------------- |
+| **`options`** | <code><a href="#getalloptions">GetAllOptions</a></code> |
+
+**Returns:** <code>Promise&lt;<a href="#getnotificationsresult">GetNotificationsResult</a>&gt;</code>
+
+**Since:** 8.0.0
 
 --------------------
 
@@ -433,9 +543,10 @@ Remove all listeners for this plugin.
 
 #### ScheduleResult
 
-| Prop                | Type                                       | Description                          | Since |
-| ------------------- | ------------------------------------------ | ------------------------------------ | ----- |
-| **`notifications`** | <code>LocalNotificationDescriptor[]</code> | The list of scheduled notifications. | 1.0.0 |
+| Prop                | Type                                                        | Description                                                                                                                                                                                 | Since |
+| ------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **`notifications`** | <code>LocalNotificationDescriptor[]</code>                  | The list of scheduled notifications.                                                                                                                                                        | 1.0.0 |
+| **`warning`**       | <code><a href="#schedulewarning">ScheduleWarning</a></code> | Set only when `exactAlarm` was requested but the exact-alarm permission was not granted: the notifications were scheduled as inexact alarms instead. Absent on a fully successful schedule. | 8.0.0 |
 
 
 #### LocalNotificationDescriptor
@@ -447,11 +558,22 @@ The object that describes a local notification.
 | **`id`** | <code>number</code> | The notification identifier. | 1.0.0 |
 
 
+#### ScheduleWarning
+
+A non-fatal warning returned alongside a successful result.
+
+| Prop          | Type                | Description                                  | Since |
+| ------------- | ------------------- | -------------------------------------------- | ----- |
+| **`code`**    | <code>string</code> | The `OS-PLUG-LNOT-NNNN` warning code.        | 8.0.0 |
+| **`message`** | <code>string</code> | A human-readable description of the warning. | 8.0.0 |
+
+
 #### ScheduleOptions
 
-| Prop                | Type                                   | Description                            | Since |
-| ------------------- | -------------------------------------- | -------------------------------------- | ----- |
-| **`notifications`** | <code>LocalNotificationSchema[]</code> | The list of notifications to schedule. | 1.0.0 |
+| Prop                | Type                                   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Default            | Since |
+| ------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----- |
+| **`notifications`** | <code>LocalNotificationSchema[]</code> | The list of notifications to schedule.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                    | 1.0.0 |
+| **`exactAlarm`**    | <code>boolean</code>                   | Request the exact-alarm permission before scheduling, so notifications fire at their precise time. When `true` on Android 12+ (API 31+), if the app is not yet allowed to schedule exact alarms the system "Alarms & reminders" settings screen is opened so the user can grant it. If the user denies it, the notifications are still scheduled as *inexact* alarms and <a href="#scheduleresult">`ScheduleResult.warning`</a> is set. When `false` (the default) scheduling never prompts and silently falls back to an inexact alarm if exact alarms are not permitted. Has no effect on iOS or web (notifications there are not subject to an exact-alarm permission). | <code>false</code> | 8.0.0 |
 
 
 #### LocalNotificationSchema
@@ -482,6 +604,8 @@ The object that describes a local notification.
 | **`autoCancel`**        | <code>boolean</code>                                            | If true, the notification is canceled when the user clicks on it. Calls `setAutoCancel()` on [`NotificationCompat.Builder`](https://developer.android.com/reference/androidx/core/app/NotificationCompat.Builder) with the provided value. Only available for Android.                                                                                                                                                                                                                                                                                                                                                     | 1.0.0 |
 | **`inboxList`**         | <code>string[]</code>                                           | Sets a list of strings for display in an inbox style notification. Up to 5 strings are allowed. Only available for Android.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 1.0.0 |
 | **`silent`**            | <code>boolean</code>                                            | If true, notification will not appear while app is in the foreground. Only available for iOS.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 5.0.0 |
+| **`badge`**             | <code>number</code>                                             | The number to display on the app icon badge when this notification is delivered. On iOS this sets the badge count on the [`UNMutableNotificationContent`](https://developer.apple.com/documentation/usernotifications/unmutablenotificationcontent). On Android this calls `setNumber()` on [`NotificationCompat.Builder`](https://developer.android.com/reference/androidx/core/app/NotificationCompat.Builder).                                                                                                                                                                                                          | 8.0.0 |
+| **`foreground`**        | <code>boolean</code>                                            | Whether the notification should be presented while the app is in the foreground. On iOS `true` forces the notification to be shown even while the app is foregrounded, while `false` suppresses it (it is still delivered to the `localNotificationReceived` listener). This is independent of `silent`; when both are provided, `foreground` takes precedence. On Android it raises the notification priority so it can present as a heads-up notification.                                                                                                                                                               | 8.0.0 |
 
 
 #### Schedule
@@ -680,6 +804,34 @@ An action that can be taken when a notification is displayed.
 | **`sound`**        | <code>string</code>                           | Sound that was used when the notification was displayed. Only available for iOS.               | 4.0.0 |
 
 
+#### RemoveByIdsOptions
+
+| Prop      | Type                  | Description                                               | Since |
+| --------- | --------------------- | --------------------------------------------------------- | ----- |
+| **`ids`** | <code>number[]</code> | The identifiers of the delivered notifications to remove. | 8.0.0 |
+
+
+#### GetNotificationsResult
+
+| Prop                | Type                                   | Description                                   | Since |
+| ------------------- | -------------------------------------- | --------------------------------------------- | ----- |
+| **`notifications`** | <code>LocalNotificationSchema[]</code> | The list of notifications matching the query. | 8.0.0 |
+
+
+#### GetByIdsOptions
+
+| Prop      | Type                  | Description                                       | Since |
+| --------- | --------------------- | ------------------------------------------------- | ----- |
+| **`ids`** | <code>number[]</code> | The identifiers of the notifications to retrieve. | 8.0.0 |
+
+
+#### GetAllOptions
+
+| Prop        | Type                                                            | Description                                                                                                        | Since |
+| ----------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----- |
+| **`state`** | <code><a href="#notificationstate">NotificationState</a></code> | Filter the returned notifications by state. When omitted, both scheduled and delivered notifications are returned. | 8.0.0 |
+
+
 #### Channel
 
 | Prop              | Type                                              | Description                                                                                                                                                                                                                                                                                                                                    | Default          | Since |
@@ -754,6 +906,16 @@ The interruption level that indicates the priority and delivery timing of a noti
   See [Time Sensitive notifications](https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/timesensitive) for more details.
 
 <code>'active' | 'critical' | 'passive' | 'timeSensitive'</code>
+
+
+#### NotificationState
+
+The notification state used to filter `getAll`.
+
+- `SCHEDULED`: notifications that are pending delivery.
+- `TRIGGERED`: notifications that have already been delivered.
+
+<code>'SCHEDULED' | 'TRIGGERED'</code>
 
 
 #### Importance
