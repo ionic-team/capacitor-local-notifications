@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import com.getcapacitor.JSObject
 import com.getcapacitor.Logger
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -40,19 +39,12 @@ class TimedNotificationPublisher : BroadcastReceiver() {
         val notificationJson = storage.getSavedNotificationAsJSObject(id.toString())
         LocalNotificationsPlugin.fireReceived(notificationJson)
         notificationManager.notify(id, notification)
-        if (!rescheduleNotificationIfNeeded(context, intent, id)) {
-            // Keep recurring (every / repeats) notifications in storage so cancel()/cancelAll()
-            // can still find and cancel their OS repeating alarm. One-shot notifications are removed.
-            if (!isRepeating(notificationJson)) {
-                storage.deleteNotification(id.toString())
-            }
-        }
-    }
-
-    private fun isRepeating(notificationJson: JSObject?): Boolean {
-        val schedule = notificationJson?.optJSONObject("schedule") ?: return false
-        if (schedule.optString("every", "").isNotEmpty()) return true
-        return schedule.optBoolean("repeats", false)
+        rescheduleNotificationIfNeeded(context, intent, id)
+        // The notification's record stays in storage after firing (matching the
+        // legacy plugin) so a triggered notification's full data — sound, extra,
+        // badge, at — remains queryable via getByIds()/getAll(). It's removed only
+        // by an explicit cancel/clear call, or by the user dismissing it from the
+        // shade (NotificationDismissReceiver).
     }
 
     private fun rescheduleNotificationIfNeeded(context: Context, intent: Intent, id: Int): Boolean {

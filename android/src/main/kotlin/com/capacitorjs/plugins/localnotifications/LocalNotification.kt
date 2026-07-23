@@ -9,6 +9,7 @@ import com.getcapacitor.JSObject
 import com.getcapacitor.PluginCall
 import com.getcapacitor.plugin.util.AssetUtil
 import java.text.ParseException
+import java.util.Date
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -82,6 +83,18 @@ class LocalNotification {
     fun isScheduled(): Boolean {
         val s = schedule ?: return false
         return s.on != null || s.at != null || s.every != null
+    }
+
+    /**
+     * Whether this notification has already fired and won't fire again — a
+     * one-shot `at` whose time has passed. Perpetual schedules (`every`/`on`/
+     * `repeats`) are never "triggered"; they stay "scheduled" indefinitely.
+     */
+    fun isTriggered(): Boolean {
+        val s = schedule ?: return false
+        if (s.isPerpetual()) return false
+        val at = s.at ?: return false
+        return at.time <= Date().time
     }
 
     companion object {

@@ -254,17 +254,11 @@ class LocalNotificationsPlugin : Plugin() {
                     matched.add(n)
                 }
             }
-            val scheduled = LocalNotification.buildLocalNotificationPendingList(matched)
-            appendNotifications(notifications, scheduled.getJSONArray("notifications"))
+            val matchedResult = LocalNotification.buildLocalNotificationPendingList(matched)
+            appendNotifications(notifications, matchedResult.getJSONArray("notifications"))
         } catch (e: JSONException) {
             LocalNotificationsError.INVALID_NOTIFICATION_FORMAT.reject(call, e)
             return
-        }
-
-        for (notif in notificationManager.activeNotifications) {
-            if (ids.contains(notif.id)) {
-                notifications.put(buildDeliveredNotificationJSObject(notif))
-            }
         }
 
         val result = JSObject()
@@ -282,15 +276,14 @@ class LocalNotificationsPlugin : Plugin() {
         val notifications = JSArray()
 
         try {
-            if (state == null || "SCHEDULED" == state) {
-                val scheduled = LocalNotification.buildLocalNotificationPendingList(notificationStorage.getSavedNotifications())
-                appendNotifications(notifications, scheduled.getJSONArray("notifications"))
+            val all = notificationStorage.getSavedNotifications()
+            val filtered = when (state) {
+                "SCHEDULED" -> all.filter { !it.isTriggered() }
+                "TRIGGERED" -> all.filter { it.isTriggered() }
+                else -> all
             }
-            if (state == null || "TRIGGERED" == state) {
-                for (notif in notificationManager.activeNotifications) {
-                    notifications.put(buildDeliveredNotificationJSObject(notif))
-                }
-            }
+            val result = LocalNotification.buildLocalNotificationPendingList(filtered)
+            appendNotifications(notifications, result.getJSONArray("notifications"))
         } catch (e: JSONException) {
             LocalNotificationsError.INVALID_NOTIFICATION_FORMAT.reject(call, e)
             return
