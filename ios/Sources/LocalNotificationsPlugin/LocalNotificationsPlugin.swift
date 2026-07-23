@@ -549,7 +549,12 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
 
         if let every = every {
             if let repeatDateInterval = getRepeatDateInterval(every, count) {
-                return UNTimeIntervalNotificationTrigger(timeInterval: repeatDateInterval.duration, repeats: true)
+                // A repeating UNTimeIntervalNotificationTrigger requires an interval of at
+                // least 60s (a shorter one is an uncaught exception, not a catchable error).
+                // `every: "second"` (or a low count) resolves under that, so clamp up to the
+                // platform minimum instead of crashing.
+                let interval = max(repeatDateInterval.duration, 60)
+                return UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: true)
             }
         }
 
