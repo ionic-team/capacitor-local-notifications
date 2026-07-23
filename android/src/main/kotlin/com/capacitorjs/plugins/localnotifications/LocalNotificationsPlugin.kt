@@ -346,6 +346,7 @@ class LocalNotificationsPlugin : Plugin() {
                     } else {
                         notificationManager.cancel(tag, id)
                     }
+                    removeFromStorageIfRemovable(id)
                 } else {
                     LocalNotificationsError.INVALID_REMOVE_LIST.reject(call)
                 }
@@ -374,6 +375,7 @@ class LocalNotificationsPlugin : Plugin() {
         }
         for (id in ids) {
             notificationManager.cancel(id)
+            removeFromStorageIfRemovable(id)
         }
         call.resolve()
     }
@@ -381,7 +383,31 @@ class LocalNotificationsPlugin : Plugin() {
     @PluginMethod
     fun removeAllDeliveredNotifications(call: PluginCall) {
         notificationManager.cancelAll()
+        // Only forget already-triggered, non-perpetual notifications — a perpetual
+        // (every/on/repeats) schedule keeps its storage record so cancel()/cancelAll()
+        // can still find and cancel its OS repeating alarm; dismissing one delivered
+        // instance doesn't end the series.
+        for (idStr in notificationStorage.getSavedNotificationIds()) {
+            val existing = notificationStorage.getSavedNotification(idStr)
+            if (existing?.isTriggered() == true) {
+                notificationStorage.deleteNotification(idStr)
+            }
+        }
         call.resolve()
+    }
+
+    /**
+     * Forget a delivered notification's storage record, unless it's part of a
+     * perpetual (every/on/repeats) schedule — matching the dismiss-receiver's
+     * isRemovable() rule, so clearing one delivered instance never orphans a
+     * still-active repeating alarm.
+     */
+    private fun removeFromStorageIfRemovable(id: Int) {
+        val existing = notificationStorage.getSavedNotification(id.toString())
+        val removable = existing?.schedule?.isRemovable() ?: true
+        if (removable) {
+            notificationStorage.deleteNotification(id.toString())
+        }
     }
 
     @PluginMethod
