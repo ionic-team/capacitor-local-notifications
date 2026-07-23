@@ -13,6 +13,15 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+        <provider
+            android:name="com.capacitorjs.plugins.localnotifications.LocalNotificationsAssetProvider"
+            android:authorities="${applicationId}.localnotifications.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/localnotifications_provider_paths" />
+        </provider>
     </application>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
