@@ -41,6 +41,15 @@ class LocalNotification {
     var badge: Int? = null
     var foreground: Boolean? = null
 
+    /**
+     * Internal bookkeeping only — never sent to or read from JS. Set when
+     * cancel()/cancelAll() preserves a still-delivered notification's record
+     * instead of deleting it, so classification and reboot-restore can tell
+     * it's no longer actually scheduled, even though live OS signals like the
+     * alarm registration don't survive a reboot to say so themselves.
+     */
+    var cancelled: Boolean = false
+
     // Icons are stored as their bare resource base name.
     var smallIcon: String? = null
         set(value) {
@@ -171,6 +180,7 @@ class LocalNotification {
             if (jsonObject.has("foreground")) {
                 n.foreground = jsonObject.getBoolean("foreground", false)
             }
+            n.cancelled = jsonObject.getBoolean("cancelled", false) ?: false
 
             try {
                 val inboxList = jsonObject.getJSONArray("inboxList")

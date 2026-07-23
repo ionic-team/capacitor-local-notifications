@@ -230,7 +230,9 @@ class LocalNotificationsPlugin : Plugin() {
     }
 
     /**
-     * Get the notifications (scheduled and/or delivered) matching the ids.
+     * Get the notifications (scheduled and/or delivered) matching the ids. Same
+     * "everything valid" semantics as getAll() with no state filter, just also
+     * constrained to the requested ids.
      */
     @PluginMethod
     fun getByIds(call: PluginCall) {
@@ -247,12 +249,10 @@ class LocalNotificationsPlugin : Plugin() {
 
         val notifications = JSArray()
         try {
-            val matched = ArrayList<LocalNotification>()
-            for (n in notificationStorage.getSavedNotifications()) {
+            val activeIds = manager.currentlyVisibleIds()
+            val matched = notificationStorage.getSavedNotifications().filter { n ->
                 val nid = n.id
-                if (nid != null && ids.contains(nid)) {
-                    matched.add(n)
-                }
+                nid != null && ids.contains(nid) && matchesState(n, null, activeIds)
             }
             val matchedResult = LocalNotification.buildLocalNotificationPendingList(matched)
             appendNotifications(notifications, matchedResult.getJSONArray("notifications"))
@@ -276,32 +276,8 @@ class LocalNotificationsPlugin : Plugin() {
         val notifications = JSArray()
 
         try {
-            val all = notificationStorage.getSavedNotifications()
-            // A perpetual (every/on/repeats) schedule is "scheduled" only while its
-            // alarm is genuinely still registered — cancel/cancelAll can leave its
-            // storage record behind (so a still-visible delivered instance keeps
-            // showing under TRIGGERED) without it still being scheduled to fire again.
-            // Once it has fired at least once and is still visible in the shade, it's
-            // ALSO "triggered".
-            val activeIds = notificationManager.activeNotifications.map { it.id }.toSet()
-            val isScheduled = { n: LocalNotification ->
-                val perpetual = n.schedule?.isPerpetual() == true
-                val nid = n.id
-                !n.isTriggered() && (!perpetual || (nid != null && manager.isAlarmActive(nid)))
-            }
-            val isTriggered = { n: LocalNotification ->
-                val nid = n.id
-                n.isTriggered() || (n.schedule?.isPerpetual() == true && nid != null && activeIds.contains(nid))
-            }
-            // No filter = everything valid, i.e. the union of SCHEDULED and
-            // TRIGGERED — not raw storage. A record can outlive both (e.g. a
-            // perpetual schedule that was cancelled while still visible, then
-            // dismissed) and must not resurface here either.
-            val filtered = when (state) {
-                "SCHEDULED" -> all.filter(isScheduled)
-                "TRIGGERED" -> all.filter(isTriggered)
-                else -> all.filter { n -> isScheduled(n) || isTriggered(n) }
-            }
+            val activeIds = manager.currentlyVisibleIds()
+            val filtered = notificationStorage.getSavedNotifications().filter { matchesState(it, state, activeIds) }
             val result = LocalNotification.buildLocalNotificationPendingList(filtered)
             appendNotifications(notifications, result.getJSONArray("notifications"))
         } catch (e: JSONException) {
@@ -312,6 +288,18 @@ class LocalNotificationsPlugin : Plugin() {
         val result = JSObject()
         result.put("notifications", notifications)
         call.resolve(result)
+    }
+
+    /**
+     * Whether [n] belongs in the requested state bucket. No state (null) means
+     * "everything valid" — the union of SCHEDULED and TRIGGERED.
+     */
+    private fun matchesState(n: LocalNotification, state: String?, activeIds: Set<Int>): Boolean {
+        return when (state) {
+            "SCHEDULED" -> manager.isCurrentlyScheduled(n)
+            "TRIGGERED" -> manager.isCurrentlyTriggered(n, activeIds)
+            else -> manager.isCurrentlyScheduled(n) || manager.isCurrentlyTriggered(n, activeIds)
+        }
     }
 
     private fun parseIds(idsArray: JSArray): List<Int>? {
@@ -396,17 +384,14 @@ class LocalNotificationsPlugin : Plugin() {
     @PluginMethod
     fun removeAllDeliveredNotifications(call: PluginCall) {
         notificationManager.cancelAll()
-        // Forget already-triggered, non-perpetual notifications outright. A
-        // perpetual (every/on/repeats) schedule keeps its storage record only
-        // while its alarm is still genuinely active — cancel()/cancelAll() can
-        // leave a cancelled-but-still-visible perpetual record behind, and once
-        // it's also no longer scheduled to fire again, dismissing it here must
-        // not leave an orphan with no value under either SCHEDULED or TRIGGERED.
+        // Forget only notifications with no reason left to be kept: an
+        // already-triggered one-shot, or a perpetual schedule that's been marked
+        // cancelled. A perpetual notification still genuinely scheduled
+        // survives, even though its currently-visible instance was just
+        // dismissed from the shade above.
         for (idStr in notificationStorage.getSavedNotificationIds()) {
             val existing = notificationStorage.getSavedNotification(idStr)
-            val id = idStr.toIntOrNull()
-            val perpetual = existing?.schedule?.isPerpetual() == true
-            if (existing?.isTriggered() == true || (perpetual && id != null && !manager.isAlarmActive(id))) {
+            if (LocalNotificationManager.isSafeToForget(existing)) {
                 notificationStorage.deleteNotification(idStr)
             }
         }
@@ -414,19 +399,14 @@ class LocalNotificationsPlugin : Plugin() {
     }
 
     /**
-     * Forget a delivered notification's storage record, unless it's part of a
-     * perpetual (every/on/repeats) schedule — matching the dismiss-receiver's
-     * isRemovable() rule, so clearing one delivered instance never orphans a
-     * still-active repeating alarm.
+     * Forget a delivered notification's storage record — but only once it's
+     * actually safe to (see [LocalNotificationManager.isSafeToForget]). Clearing
+     * a not-yet-triggered notification must never silently cancel it, and
+     * clearing a still-active perpetual schedule must never orphan its series.
      */
     private fun removeFromStorageIfRemovable(id: Int) {
         val existing = notificationStorage.getSavedNotification(id.toString())
-        val removable = existing?.schedule?.isRemovable() ?: true
-        // A perpetual schedule is never "removable" by shape alone, but once its
-        // alarm has actually been cancelled there's no series left to preserve
-        // the record for — keep it only while genuinely still scheduled.
-        val perpetualAndDead = existing?.schedule?.isPerpetual() == true && !manager.isAlarmActive(id)
-        if (removable || perpetualAndDead) {
+        if (LocalNotificationManager.isSafeToForget(existing)) {
             notificationStorage.deleteNotification(id.toString())
         }
     }

@@ -16,9 +16,10 @@ class NotificationDismissReceiver : BroadcastReceiver() {
             Logger.error(Logger.tags("LN"), "Invalid notification dismiss operation", null)
             return
         }
-        val isRemovable = intent.getBooleanExtra(LocalNotificationManager.NOTIFICATION_IS_REMOVABLE_KEY, true)
-        if (isRemovable || !LocalNotificationManager.isAlarmActive(context, intExtra)) {
-            NotificationStorage(context).deleteNotification(intExtra.toString())
+        val storage = NotificationStorage(context)
+        val existing = storage.getSavedNotification(intExtra.toString())
+        if (LocalNotificationManager.isSafeToForget(existing)) {
+            storage.deleteNotification(intExtra.toString())
         }
     }
 }
