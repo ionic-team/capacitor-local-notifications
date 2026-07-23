@@ -125,17 +125,20 @@ public class LocalNotificationsHandler: NSObject, NotificationHandlerProtocol {
         ]
 
         if let userInfo = JSTypes.coerceDictionaryToJSObject(request.content.userInfo) {
-            var extra = userInfo["cap_extra"] as? JSObject ?? userInfo
-
-            // check for any dates and convert them to strings
-            for(key, value) in extra {
-                if let date = value as? Date {
-                    let dateString = ISO8601DateFormatter().string(from: date)
-                    extra[key] = dateString
+            // `extra` is documented as `any`, not just an object. Only dictionaries
+            // need per-key Date normalization; anything else is passed through
+            // as-is rather than substituting the whole userInfo object.
+            if var extraDict = userInfo["cap_extra"] as? JSObject {
+                for(key, value) in extraDict {
+                    if let date = value as? Date {
+                        let dateString = ISO8601DateFormatter().string(from: date)
+                        extraDict[key] = dateString
+                    }
                 }
+                notification["extra"] = extraDict
+            } else if let extraValue = userInfo["cap_extra"] {
+                notification["extra"] = extraValue
             }
-
-            notification["extra"] = extra
 
             if var schedule = userInfo["cap_schedule"] as? JSObject {
                 // convert schedule at date to string
