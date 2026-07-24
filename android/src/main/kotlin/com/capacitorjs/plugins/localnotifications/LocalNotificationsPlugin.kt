@@ -47,6 +47,7 @@ class LocalNotificationsPlugin : Plugin() {
         notificationChannelManager = NotificationChannelManager(activity)
         notificationManager = activity.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         staticBridge = bridge
+        LegacyNotificationMigrator.run(context, notificationStorage, manager)
     }
 
     override fun handleOnNewIntent(data: Intent) {
