@@ -421,17 +421,23 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
             throw LocalNotificationError.contentNoBody
         }
 
-        let extra = notification["extra"] as? JSObject ?? [:]
         let schedule = notification["schedule"] as? JSObject ?? [:]
         let content = UNMutableNotificationContent()
         content.title = NSString.localizedUserNotificationString(forKey: title, arguments: nil)
         content.body = NSString.localizedUserNotificationString(forKey: body,
                                                                 arguments: nil)
 
-        content.userInfo = [
-            "cap_extra": extra,
+        // `extra` is documented as `any`, not just an object — preserve whatever
+        // raw value was provided (string, number, array, dictionary) rather than
+        // forcing a dictionary cast. And omit it entirely when not provided at
+        // all, rather than defaulting to an empty dictionary.
+        var userInfo: [String: Any] = [
             "cap_schedule": schedule
         ]
+        if let extra = notification["extra"] {
+            userInfo["cap_extra"] = extra
+        }
+        content.userInfo = userInfo
 
         if let actionTypeId = notification["actionTypeId"] as? String {
             content.categoryIdentifier = actionTypeId
