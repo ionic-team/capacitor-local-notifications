@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>LocalNotifications Cap Test</title>
+  <style>body{font-family:-apple-system,system-ui,sans-serif;margin:1rem}button{display:block;width:100%;padding:.9rem;margin:.4rem 0}pre{background:#111;color:#0f0;padding:.75rem;border-radius:6px;white-space:pre-wrap;min-height:6rem}</style></head>
+  <body>
+    <h1>@capacitor/local-notifications — test</h1>
+    <button onclick="run('schedule',{notifications:[{id:1,title:'Hi',body:'Body',schedule:{at:new Date(Date.now()+5000)},badge:3,foreground:true}]})">schedule()</button>
+    <button onclick="run('update',{notifications:[{id:1,title:'Upd',body:'B2',schedule:{at:new Date(Date.now()+5000)}}]})">update()</button>
+    <button onclick="run('schedule',{notifications:[{id:3,title:'Extra',body:'Has extra data',schedule:{at:new Date(Date.now()+5000)},extra:'Eheh'}]})">schedule() with extra:'Eheh' (+5s)</button>
+    <button onclick="run('schedule',{notifications:[{id:4,title:'Inexact',body:'isExactNotification:false',schedule:{at:new Date(Date.now()+10000)},isExactNotification:false}]})">schedule() isExactNotification:false (+10s)</button>
+    <button onclick="run('schedule',{notifications:[{id:8,title:'Exact non-mandatory',body:'isExactNotification:true, isExactMandatory:false',schedule:{at:new Date(Date.now()+10000)},isExactNotification:true,isExactMandatory:false}]})">schedule() isExactNotification:true, isExactMandatory:false (+10s)</button>
+    <button onclick="run('schedule',{notifications:[{id:5,title:'Mandatory',body:'isExactMandatory:true (revoke Alarms &amp; reminders first to see it reject)',schedule:{at:new Date(Date.now()+10000)},isExactMandatory:true}]})">schedule() isExactMandatory:true (+10s)</button>
+    <button onclick="run('schedule',{notifications:[{id:6,title:'Mandatory (batch A)',body:'isExactMandatory:true',schedule:{at:new Date(Date.now()+10000)},isExactMandatory:true},{id:7,title:'Non-mandatory (batch B)',body:'default flags',schedule:{at:new Date(Date.now()+10000)}}]})">schedule() batch: id6 mandatory + id7 default (+10s)</button>
+    <button onclick="run('getAll',{})">getAll()</button>
+    <button onclick="run('getByIds',{ids:[1]})">getByIds()</button>
+    <button onclick="run('cancelAll')">cancelAll()</button>
+    <button onclick="run('removeDeliveredNotificationsById',{ids:[1]})">removeDeliveredNotificationsById()</button>
+    <button onclick="run('checkPermissions')">checkPermissions()</button>
+    <pre id="out">Registering listeners…</pre>
+    <script>
+      function show(l,d){document.getElementById('out').textContent=l+'\n'+JSON.stringify(d,null,2);}
+      function plugin(){return window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;}
+      async function run(m,opts){
+        document.getElementById('out').textContent=m+'() …';
+        var P=plugin();
+        if(!P){show('ERROR','LocalNotifications not available (run on device/simulator).');return;}
+        try{ var r=opts===undefined?await P[m]():await P[m](opts); show('✅ '+m,r);}
+        catch(e){ show('❌ '+m,{message:e.message,code:e.code}); }
+      }
+      function registerListeners(){
+        var P=plugin();
+        if(!P){setTimeout(registerListeners,200);return;}
+        P.addListener('localNotificationReceived',function(n){show('📥 localNotificationReceived',n);});
+        P.addListener('localNotificationActionPerformed',function(a){show('👆 localNotificationActionPerformed',a);});
+        document.getElementById('out').textContent='Ready — tap a method (listeners registered).';
+      }
+      registerListeners();
+    </script>
+  </body>
+</html>

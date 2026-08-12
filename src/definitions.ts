@@ -73,9 +73,24 @@ export interface LocalNotificationsPlugin {
   /**
    * Schedule one or more local notifications.
    *
+   * On both platforms this now requests the notification permission it needs
+   * before scheduling if it has not been granted yet (Android 13+
+   * `POST_NOTIFICATIONS`, iOS `UNUserNotificationCenter` authorization). Apps
+   * that already call `requestPermissions()` beforehand are unaffected.
+   *
    * @since 1.0.0
    */
   schedule(options: ScheduleOptions): Promise<ScheduleResult>;
+
+  /**
+   * Update one or more previously scheduled local notifications, matched by `id`.
+   *
+   * Notifications whose `id` is not currently scheduled are ignored. Like
+   * `schedule`, this requests the notification permission if needed.
+   *
+   * @since 8.3.0
+   */
+  update(options: ScheduleOptions): Promise<ScheduleResult>;
 
   /**
    * Get a list of pending notifications.
@@ -101,6 +116,13 @@ export interface LocalNotificationsPlugin {
   cancel(options: CancelOptions): Promise<void>;
 
   /**
+   * Cancel all pending (scheduled) notifications.
+   *
+   * @since 8.3.0
+   */
+  cancelAll(): Promise<void>;
+
+  /**
    * Check if notifications are enabled or not.
    *
    * @deprecated Use `checkPermissions()` to check if the user has allowed
@@ -124,11 +146,42 @@ export interface LocalNotificationsPlugin {
   removeDeliveredNotifications(delivered: DeliveredNotifications): Promise<void>;
 
   /**
+   * Remove the specified delivered notifications from the notifications screen,
+   * matched by `id`.
+   *
+   * Id-based counterpart of `removeDeliveredNotifications`, so callers that only
+   * have identifiers (e.g. the OutSystems `ClearNotifications` action) can map to
+   * a single method call.
+   *
+   * @since 8.3.0
+   */
+  removeDeliveredNotificationsById(options: RemoveByIdsOptions): Promise<void>;
+
+  /**
    * Remove all the notifications from the notifications screen.
    *
    * @since 4.0.0
    */
   removeAllDeliveredNotifications(): Promise<void>;
+
+  /**
+   * Get the notifications matching the supplied identifiers, whether they are
+   * still scheduled (pending) or already delivered.
+   *
+   * @since 8.3.0
+   */
+  getByIds(options: GetByIdsOptions): Promise<GetNotificationsResult>;
+
+  /**
+   * Get all notifications known to the plugin, optionally filtered by state.
+   *
+   * When `state` is omitted both scheduled and delivered notifications are
+   * returned. `SCHEDULED` returns pending notifications; `TRIGGERED` returns
+   * delivered notifications.
+   *
+   * @since 8.3.0
+   */
+  getAll(options?: GetAllOptions): Promise<GetNotificationsResult>;
 
   /**
    * Create a notification channel.
@@ -253,6 +306,37 @@ export interface ScheduleResult {
    * @since 1.0.0
    */
   notifications: LocalNotificationDescriptor[];
+
+  /**
+   * Set when at least one notification in this call had `isExactNotification`
+   * `true` (the default) but the exact-alarm permission was not granted: it
+   * was scheduled as an inexact alarm instead. Absent on `update()` calls and
+   * whenever every applicable notification got its requested exactness.
+   *
+   * @since 8.3.0
+   */
+  warning?: ScheduleWarning;
+}
+
+/**
+ * A non-fatal warning returned alongside a successful result.
+ *
+ * @since 8.3.0
+ */
+export interface ScheduleWarning {
+  /**
+   * The `OS-PLUG-LNOT-NNNN` warning code.
+   *
+   * @since 8.3.0
+   */
+  code: string;
+
+  /**
+   * A human-readable description of the warning.
+   *
+   * @since 8.3.0
+   */
+  message: string;
 }
 
 export interface PendingResult {
@@ -280,6 +364,53 @@ export interface CancelOptions {
    * @since 1.0.0
    */
   notifications: LocalNotificationDescriptor[];
+}
+
+/**
+ * The notification state used to filter `getAll`.
+ *
+ * - `SCHEDULED`: notifications that are pending delivery.
+ * - `TRIGGERED`: notifications that have already been delivered.
+ *
+ * @since 8.3.0
+ */
+export type NotificationState = 'SCHEDULED' | 'TRIGGERED';
+
+export interface RemoveByIdsOptions {
+  /**
+   * The identifiers of the delivered notifications to remove.
+   *
+   * @since 8.3.0
+   */
+  ids: number[];
+}
+
+export interface GetByIdsOptions {
+  /**
+   * The identifiers of the notifications to retrieve.
+   *
+   * @since 8.3.0
+   */
+  ids: number[];
+}
+
+export interface GetAllOptions {
+  /**
+   * Filter the returned notifications by state. When omitted, both scheduled
+   * and delivered notifications are returned.
+   *
+   * @since 8.3.0
+   */
+  state?: NotificationState;
+}
+
+export interface GetNotificationsResult {
+  /**
+   * The list of notifications matching the query.
+   *
+   * @since 8.3.0
+   */
+  notifications: LocalNotificationSchema[];
 }
 
 /**
@@ -818,6 +949,68 @@ export interface LocalNotificationSchema {
    * @since 5.0.0
    */
   silent?: boolean;
+
+  /**
+   * The number to display on the app icon badge when this notification is
+   * delivered.
+   *
+   * On iOS this sets the badge count on the
+   * [`UNMutableNotificationContent`](https://developer.apple.com/documentation/usernotifications/unmutablenotificationcontent).
+   * On Android this calls `setNumber()` on
+   * [`NotificationCompat.Builder`](https://developer.android.com/reference/androidx/core/app/NotificationCompat.Builder).
+   *
+   * @since 8.3.0
+   */
+  badge?: number;
+
+  /**
+   * Whether the notification should be presented while the app is in the
+   * foreground.
+   *
+   * On iOS `true` forces the notification to be shown even while the app is
+   * foregrounded, while `false` suppresses it (it is still delivered to the
+   * `localNotificationReceived` listener). This is independent of `silent`;
+   * when both are provided, `foreground` takes precedence.
+   * On Android it raises the notification priority so it can present as a
+   * heads-up notification.
+   *
+   * @since 8.3.0
+   */
+  foreground?: boolean;
+
+  /**
+   * Whether this notification should be scheduled with an exact alarm.
+   *
+   * Only available for Android. Defaults to `true`: on `schedule()` (API 31+),
+   * if the app isn't yet allowed to schedule exact alarms the system "Alarms &
+   * reminders" settings screen is opened so the user can grant it — regardless
+   * of `isExactMandatory`. If the user still declines, the notification falls
+   * back to an inexact alarm (unless `isExactMandatory` is also set, in which
+   * case the call is rejected instead); a fallback like this sets
+   * `ScheduleResult.warning`. `update()` never prompts and falls back silently.
+   * Set to `false` to schedule this notification as inexact outright,
+   * regardless of permission state.
+   *
+   * @since 8.3.0
+   * @default true
+   */
+  isExactNotification?: boolean;
+
+  /**
+   * Whether an exact alarm is mandatory for this notification.
+   *
+   * Only available for Android, and only meaningful when
+   * `isExactNotification` is `true` (the default) and on `schedule()` calls.
+   * If the exact-alarm permission is denied and any notification being
+   * scheduled has this set to `true`, the whole `schedule()` call is rejected
+   * instead of falling back to an inexact alarm. Has no effect on `update()`:
+   * it never enforces this, and simply falls back to inexact like a
+   * non-mandatory notification would.
+   *
+   * @since 8.3.0
+   * @default false
+   */
+  isExactMandatory?: boolean;
 }
 
 /**
