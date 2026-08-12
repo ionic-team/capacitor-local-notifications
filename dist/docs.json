@@ -43,7 +43,7 @@
         "tags": [
           {
             "name": "since",
-            "text": "8.0.0"
+            "text": "8.3.0"
           }
         ],
         "docs": "Update one or more previously scheduled local notifications, matched by `id`.\n\nNotifications whose `id` is not currently scheduled are ignored. Like\n`schedule`, this requests the notification permission if needed.",
@@ -124,7 +124,7 @@
         "tags": [
           {
             "name": "since",
-            "text": "8.0.0"
+            "text": "8.3.0"
           }
         ],
         "docs": "Cancel all pending (scheduled) notifications.",
@@ -206,7 +206,7 @@
         "tags": [
           {
             "name": "since",
-            "text": "8.0.0"
+            "text": "8.3.0"
           }
         ],
         "docs": "Remove the specified delivered notifications from the notifications screen,\nmatched by `id`.\n\nId-based counterpart of `removeDeliveredNotifications`, so callers that only\nhave identifiers (e.g. the OutSystems `ClearNotifications` action) can map to\na single method call.",
@@ -244,7 +244,7 @@
         "tags": [
           {
             "name": "since",
-            "text": "8.0.0"
+            "text": "8.3.0"
           }
         ],
         "docs": "Get the notifications matching the supplied identifiers, whether they are\nstill scheduled (pending) or already delivered.",
@@ -268,7 +268,7 @@
         "tags": [
           {
             "name": "since",
-            "text": "8.0.0"
+            "text": "8.3.0"
           }
         ],
         "docs": "Get all notifications known to the plugin, optionally filtered by state.\n\nWhen `state` is omitted both scheduled and delivered notifications are\nreturned. `SCHEDULED` returns pending notifications; `TRIGGERED` returns\ndelivered notifications.",
@@ -917,7 +917,7 @@
           "name": "badge",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],
@@ -929,7 +929,7 @@
           "name": "foreground",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],
@@ -2570,7 +2570,7 @@
           "name": "ids",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],
@@ -2591,7 +2591,7 @@
           "name": "notifications",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],
@@ -2614,7 +2614,7 @@
           "name": "ids",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],
@@ -2635,7 +2635,7 @@
           "name": "state",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],

@@ -88,7 +88,7 @@ export interface LocalNotificationsPlugin {
    * Notifications whose `id` is not currently scheduled are ignored. Like
    * `schedule`, this requests the notification permission if needed.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   update(options: ScheduleOptions): Promise<ScheduleResult>;
 
@@ -118,7 +118,7 @@ export interface LocalNotificationsPlugin {
   /**
    * Cancel all pending (scheduled) notifications.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   cancelAll(): Promise<void>;
 
@@ -153,7 +153,7 @@ export interface LocalNotificationsPlugin {
    * have identifiers (e.g. the OutSystems `ClearNotifications` action) can map to
    * a single method call.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   removeDeliveredNotificationsById(options: RemoveByIdsOptions): Promise<void>;
 
@@ -168,7 +168,7 @@ export interface LocalNotificationsPlugin {
    * Get the notifications matching the supplied identifiers, whether they are
    * still scheduled (pending) or already delivered.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   getByIds(options: GetByIdsOptions): Promise<GetNotificationsResult>;
 
@@ -179,7 +179,7 @@ export interface LocalNotificationsPlugin {
    * returned. `SCHEDULED` returns pending notifications; `TRIGGERED` returns
    * delivered notifications.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   getAll(options?: GetAllOptions): Promise<GetNotificationsResult>;
 
@@ -372,7 +372,7 @@ export interface CancelOptions {
  * - `SCHEDULED`: notifications that are pending delivery.
  * - `TRIGGERED`: notifications that have already been delivered.
  *
- * @since 8.0.0
+ * @since 8.3.0
  */
 export type NotificationState = 'SCHEDULED' | 'TRIGGERED';
 
@@ -380,7 +380,7 @@ export interface RemoveByIdsOptions {
   /**
    * The identifiers of the delivered notifications to remove.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   ids: number[];
 }
@@ -389,7 +389,7 @@ export interface GetByIdsOptions {
   /**
    * The identifiers of the notifications to retrieve.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   ids: number[];
 }
@@ -399,7 +399,7 @@ export interface GetAllOptions {
    * Filter the returned notifications by state. When omitted, both scheduled
    * and delivered notifications are returned.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   state?: NotificationState;
 }
@@ -408,7 +408,7 @@ export interface GetNotificationsResult {
   /**
    * The list of notifications matching the query.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   notifications: LocalNotificationSchema[];
 }
@@ -959,7 +959,7 @@ export interface LocalNotificationSchema {
    * On Android this calls `setNumber()` on
    * [`NotificationCompat.Builder`](https://developer.android.com/reference/androidx/core/app/NotificationCompat.Builder).
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   badge?: number;
 
@@ -974,7 +974,7 @@ export interface LocalNotificationSchema {
    * On Android it raises the notification priority so it can present as a
    * heads-up notification.
    *
-   * @since 8.0.0
+   * @since 8.3.0
    */
   foreground?: boolean;
 

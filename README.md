@@ -166,7 +166,7 @@ Notifications whose `id` is not currently scheduled are ignored. Like
 
 **Returns:** <code>Promise&lt;<a href="#scheduleresult">ScheduleResult</a>&gt;</code>
 
-**Since:** 8.0.0
+**Since:** 8.3.0
 
 --------------------
 
@@ -230,7 +230,7 @@ cancelAll() => Promise<void>
 
 Cancel all pending (scheduled) notifications.
 
-**Since:** 8.0.0
+**Since:** 8.3.0
 
 --------------------
 
@@ -299,7 +299,7 @@ a single method call.
 | ------------- | ----------------------------------------------------------------- |
 | **`options`** | <code><a href="#removebyidsoptions">RemoveByIdsOptions</a></code> |
 
-**Since:** 8.0.0
+**Since:** 8.3.0
 
 --------------------
 
@@ -332,7 +332,7 @@ still scheduled (pending) or already delivered.
 
 **Returns:** <code>Promise&lt;<a href="#getnotificationsresult">GetNotificationsResult</a>&gt;</code>
 
-**Since:** 8.0.0
+**Since:** 8.3.0
 
 --------------------
 
@@ -355,7 +355,7 @@ delivered notifications.
 
 **Returns:** <code>Promise&lt;<a href="#getnotificationsresult">GetNotificationsResult</a>&gt;</code>
 
-**Since:** 8.0.0
+**Since:** 8.3.0
 
 --------------------
 
@@ -603,8 +603,8 @@ A non-fatal warning returned alongside a successful result.
 | **`autoCancel`**          | <code>boolean</code>                                            | If true, the notification is canceled when the user clicks on it. Calls `setAutoCancel()` on [`NotificationCompat.Builder`](https://developer.android.com/reference/androidx/core/app/NotificationCompat.Builder) with the provided value. Only available for Android.                                                                                                                                                                                                                                                                                                                                                                                                                              |                    | 1.0.0 |
 | **`inboxList`**           | <code>string[]</code>                                           | Sets a list of strings for display in an inbox style notification. Up to 5 strings are allowed. Only available for Android.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |                    | 1.0.0 |
 | **`silent`**              | <code>boolean</code>                                            | If true, notification will not appear while app is in the foreground. Only available for iOS.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                    | 5.0.0 |
-| **`badge`**               | <code>number</code>                                             | The number to display on the app icon badge when this notification is delivered. On iOS this sets the badge count on the [`UNMutableNotificationContent`](https://developer.apple.com/documentation/usernotifications/unmutablenotificationcontent). On Android this calls `setNumber()` on [`NotificationCompat.Builder`](https://developer.android.com/reference/androidx/core/app/NotificationCompat.Builder).                                                                                                                                                                                                                                                                                   |                    | 8.0.0 |
-| **`foreground`**          | <code>boolean</code>                                            | Whether the notification should be presented while the app is in the foreground. On iOS `true` forces the notification to be shown even while the app is foregrounded, while `false` suppresses it (it is still delivered to the `localNotificationReceived` listener). This is independent of `silent`; when both are provided, `foreground` takes precedence. On Android it raises the notification priority so it can present as a heads-up notification.                                                                                                                                                                                                                                        |                    | 8.0.0 |
+| **`badge`**               | <code>number</code>                                             | The number to display on the app icon badge when this notification is delivered. On iOS this sets the badge count on the [`UNMutableNotificationContent`](https://developer.apple.com/documentation/usernotifications/unmutablenotificationcontent). On Android this calls `setNumber()` on [`NotificationCompat.Builder`](https://developer.android.com/reference/androidx/core/app/NotificationCompat.Builder).                                                                                                                                                                                                                                                                                   |                    | 8.3.0 |
+| **`foreground`**          | <code>boolean</code>                                            | Whether the notification should be presented while the app is in the foreground. On iOS `true` forces the notification to be shown even while the app is foregrounded, while `false` suppresses it (it is still delivered to the `localNotificationReceived` listener). This is independent of `silent`; when both are provided, `foreground` takes precedence. On Android it raises the notification priority so it can present as a heads-up notification.                                                                                                                                                                                                                                        |                    | 8.3.0 |
 | **`isExactNotification`** | <code>boolean</code>                                            | Whether this notification should be scheduled with an exact alarm. Only available for Android. Defaults to `true`: on `schedule()` (API 31+), if the app isn't yet allowed to schedule exact alarms the system "Alarms & reminders" settings screen is opened so the user can grant it — regardless of `isExactMandatory`. If the user still declines, the notification falls back to an inexact alarm (unless `isExactMandatory` is also set, in which case the call is rejected instead); a fallback like this sets `ScheduleResult.warning`. `update()` never prompts and falls back silently. Set to `false` to schedule this notification as inexact outright, regardless of permission state. | <code>true</code>  | 8.3.0 |
 | **`isExactMandatory`**    | <code>boolean</code>                                            | Whether an exact alarm is mandatory for this notification. Only available for Android, and only meaningful when `isExactNotification` is `true` (the default) and on `schedule()` calls. If the exact-alarm permission is denied and any notification being scheduled has this set to `true`, the whole `schedule()` call is rejected instead of falling back to an inexact alarm. Has no effect on `update()`: it never enforces this, and simply falls back to inexact like a non-mandatory notification would.                                                                                                                                                                                   | <code>false</code> | 8.3.0 |
 
@@ -809,28 +809,28 @@ An action that can be taken when a notification is displayed.
 
 | Prop      | Type                  | Description                                               | Since |
 | --------- | --------------------- | --------------------------------------------------------- | ----- |
-| **`ids`** | <code>number[]</code> | The identifiers of the delivered notifications to remove. | 8.0.0 |
+| **`ids`** | <code>number[]</code> | The identifiers of the delivered notifications to remove. | 8.3.0 |
 
 
 #### GetNotificationsResult
 
 | Prop                | Type                                   | Description                                   | Since |
 | ------------------- | -------------------------------------- | --------------------------------------------- | ----- |
-| **`notifications`** | <code>LocalNotificationSchema[]</code> | The list of notifications matching the query. | 8.0.0 |
+| **`notifications`** | <code>LocalNotificationSchema[]</code> | The list of notifications matching the query. | 8.3.0 |
 
 
 #### GetByIdsOptions
 
 | Prop      | Type                  | Description                                       | Since |
 | --------- | --------------------- | ------------------------------------------------- | ----- |
-| **`ids`** | <code>number[]</code> | The identifiers of the notifications to retrieve. | 8.0.0 |
+| **`ids`** | <code>number[]</code> | The identifiers of the notifications to retrieve. | 8.3.0 |
 
 
 #### GetAllOptions
 
 | Prop        | Type                                                            | Description                                                                                                        | Since |
 | ----------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----- |
-| **`state`** | <code><a href="#notificationstate">NotificationState</a></code> | Filter the returned notifications by state. When omitted, both scheduled and delivered notifications are returned. | 8.0.0 |
+| **`state`** | <code><a href="#notificationstate">NotificationState</a></code> | Filter the returned notifications by state. When omitted, both scheduled and delivered notifications are returned. | 8.3.0 |
 
 
 #### Channel
