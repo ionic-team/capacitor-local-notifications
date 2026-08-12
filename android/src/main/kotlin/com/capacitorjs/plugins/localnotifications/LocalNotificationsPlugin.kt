@@ -102,17 +102,15 @@ class LocalNotificationsPlugin : Plugin() {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && getPermissionState(LOCAL_NOTIFICATIONS) != PermissionState.GRANTED
 
     private fun doSchedule(call: PluginCall, onlyExisting: Boolean) {
-        // The exact-alarm prompt only applies to schedule (not update). Shown
-        // when the caller opts in with exactAlarm:true, OR when any notification
-        // in this batch requires an exact alarm (isExactMandatory:true) — the
-        // mandatory flag needs a chance to let the user grant the permission
-        // before performScheduleNow rejects the call outright.
+        // The exact-alarm prompt only applies to schedule (not update), and only
+        // when any notification in this batch requires an exact alarm
+        // (isExactMandatory:true) — it needs a chance to let the user grant the
+        // permission before performScheduleNow rejects the call outright.
         val honorExact = if (onlyExisting) {
             false
         } else {
             val notifications = LocalNotification.buildNotificationList(call) ?: return
-            (call.getBoolean("exactAlarm", false) ?: false) ||
-                notifications.any { it.isExactNotification && it.isExactMandatory }
+            notifications.any { it.isExactNotification && it.isExactMandatory }
         }
         if (honorExact && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !canScheduleExactAlarms()) {
             startActivityForResult(
@@ -128,8 +126,7 @@ class LocalNotificationsPlugin : Plugin() {
     @ActivityCallback
     private fun exactAlarmScheduleCallback(call: PluginCall, result: ActivityResult) {
         // Returned from the "Alarms & reminders" settings screen; schedule now
-        // (exact if granted; otherwise inexact with a warning, or rejected if a
-        // mandatory notification is still denied).
+        // (exact if granted, otherwise rejected since the notification was mandatory).
         performScheduleNow(call, false)
     }
 
@@ -145,8 +142,7 @@ class LocalNotificationsPlugin : Plugin() {
         // All-or-nothing: if exact-alarm permission is currently missing and any
         // notification in this batch marks it mandatory, reject the whole call
         // instead of silently scheduling some of it as inexact. Schedule only —
-        // matches the legacy plugin, where update() never checks this and just
-        // lets the low-level engine try exact and silently fall back.
+        // update() never enforces this and just falls back to inexact instead.
         if (!onlyExisting && !canScheduleExactAlarms() &&
             localNotifications.any { it.isExactNotification && it.isExactMandatory }
         ) {
@@ -165,9 +161,11 @@ class LocalNotificationsPlugin : Plugin() {
                 }
             }
             result.put("notifications", jsArray)
-            // exactAlarm was requested but still not permitted -> inexact fallback.
-            val honorExact = !onlyExisting && (call.getBoolean("exactAlarm", false) ?: false)
-            if (honorExact && !canScheduleExactAlarms()) {
+            // Schedule only — update() never carries this signal. Any exact-wanting
+            // notification that got silently downgraded to inexact (permission
+            // denied, not mandatory — mandatory already rejected the whole call
+            // above) is surfaced here as a non-fatal warning.
+            if (!onlyExisting && !canScheduleExactAlarms() && localNotifications.any { it.isExactNotification }) {
                 result.put("warning", LocalNotificationsError.SCHEDULED_INEXACT.toJson())
             }
             call.resolve(result)

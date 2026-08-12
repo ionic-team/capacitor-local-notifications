@@ -509,11 +509,11 @@
           "name": "warning",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],
-          "docs": "Set only when `exactAlarm` was requested but the exact-alarm permission was\nnot granted: the notifications were scheduled as inexact alarms instead.\nAbsent on a fully successful schedule.",
+          "docs": "Set when at least one notification in this call had `isExactNotification`\n`true` (the default) but the exact-alarm permission was not granted: it\nwas scheduled as an inexact alarm instead. Absent on `update()` calls and\nwhenever every applicable notification got its requested exactness.",
           "complexTypes": [
             "ScheduleWarning"
           ],
@@ -553,7 +553,7 @@
       "docs": "A non-fatal warning returned alongside a successful result.",
       "tags": [
         {
-          "text": "8.0.0",
+          "text": "8.3.0",
           "name": "since"
         }
       ],
@@ -563,7 +563,7 @@
           "name": "code",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],
@@ -575,7 +575,7 @@
           "name": "message",
           "tags": [
             {
-              "text": "8.0.0",
+              "text": "8.3.0",
               "name": "since"
             }
           ],
@@ -605,22 +605,6 @@
             "LocalNotificationSchema"
           ],
           "type": "LocalNotificationSchema[]"
-        },
-        {
-          "name": "exactAlarm",
-          "tags": [
-            {
-              "text": "false",
-              "name": "default"
-            },
-            {
-              "text": "8.0.0",
-              "name": "since"
-            }
-          ],
-          "docs": "Request the exact-alarm permission before scheduling, so notifications fire\nat their precise time.\n\nWhen `true` on Android 12+ (API 31+), if the app is not yet allowed to\nschedule exact alarms the system \"Alarms & reminders\" settings screen is\nopened so the user can grant it. If the user denies it, the notifications\nare still scheduled as *inexact* alarms and `ScheduleResult.warning` is set.\nWhen `false` (the default) scheduling never prompts and silently falls back\nto an inexact alarm if exact alarms are not permitted.\n\nHas no effect on iOS or web (notifications there are not subject to an\nexact-alarm permission).",
-          "complexTypes": [],
-          "type": "boolean | undefined"
         }
       ]
     },
@@ -965,7 +949,7 @@
               "name": "default"
             }
           ],
-          "docs": "Whether this notification should be scheduled with an exact alarm.\n\nOnly available for Android. Defaults to `true`: the plugin always\nattempts an exact alarm and silently falls back to an inexact one if the\nexact-alarm permission isn't granted (unless `isExactMandatory` is also\nset). Set to `false` to schedule this notification as inexact outright,\nregardless of permission state.",
+          "docs": "Whether this notification should be scheduled with an exact alarm.\n\nOnly available for Android. Defaults to `true`: the plugin always\nattempts an exact alarm and falls back to an inexact one if the\nexact-alarm permission isn't granted (unless `isExactMandatory` is also\nset). On `schedule()`, a fallback like this sets `ScheduleResult.warning`;\non `update()` it happens silently. Set to `false` to schedule this\nnotification as inexact outright, regardless of permission state.",
           "complexTypes": [],
           "type": "boolean | undefined"
         },
@@ -981,7 +965,7 @@
               "name": "default"
             }
           ],
-          "docs": "Whether an exact alarm is mandatory for this notification.\n\nOnly available for Android, and only meaningful when\n`isExactNotification` is `true` (the default). If the exact-alarm\npermission is denied and any notification being scheduled has this set\nto `true`, the whole `schedule()`/`update()` call is rejected instead of\nsilently falling back to an inexact alarm.",
+          "docs": "Whether an exact alarm is mandatory for this notification.\n\nOnly available for Android, and only meaningful when\n`isExactNotification` is `true` (the default) and on `schedule()` calls.\nIf the exact-alarm permission is denied and any notification being\nscheduled has this set to `true`, the whole `schedule()` call is rejected\ninstead of falling back to an inexact alarm. Has no effect on `update()`:\nit never enforces this, and simply falls back to inexact like a\nnon-mandatory notification would.",
           "complexTypes": [],
           "type": "boolean | undefined"
         }

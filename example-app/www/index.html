@@ -6,7 +6,6 @@
   <body>
     <h1>@capacitor/local-notifications — test</h1>
     <button onclick="run('schedule',{notifications:[{id:1,title:'Hi',body:'Body',schedule:{at:new Date(Date.now()+5000)},badge:3,foreground:true}]})">schedule()</button>
-    <button onclick="run('schedule',{notifications:[{id:2,title:'Exact',body:'Exact alarm',schedule:{at:new Date(Date.now()+15000)},badge:1}],exactAlarm:true})">schedule() exactAlarm:true (+15s)</button>
     <button onclick="run('update',{notifications:[{id:1,title:'Upd',body:'B2',schedule:{at:new Date(Date.now()+5000)}}]})">update()</button>
     <button onclick="run('schedule',{notifications:[{id:3,title:'Extra',body:'Has extra data',schedule:{at:new Date(Date.now()+5000)},extra:'Eheh'}]})">schedule() with extra:'Eheh' (+5s)</button>
     <button onclick="run('schedule',{notifications:[{id:4,title:'Inexact',body:'isExactNotification:false',schedule:{at:new Date(Date.now()+10000)},isExactNotification:false}]})">schedule() isExactNotification:false (+10s)</button>
