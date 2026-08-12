@@ -952,6 +952,38 @@
           "docs": "Whether the notification should be presented while the app is in the\nforeground.\n\nOn iOS `true` forces the notification to be shown even while the app is\nforegrounded, while `false` suppresses it (it is still delivered to the\n`localNotificationReceived` listener). This is independent of `silent`;\nwhen both are provided, `foreground` takes precedence.\nOn Android it raises the notification priority so it can present as a\nheads-up notification.",
           "complexTypes": [],
           "type": "boolean | undefined"
+        },
+        {
+          "name": "isExactNotification",
+          "tags": [
+            {
+              "text": "8.3.0",
+              "name": "since"
+            },
+            {
+              "text": "true",
+              "name": "default"
+            }
+          ],
+          "docs": "Whether this notification should be scheduled with an exact alarm.\n\nOnly available for Android. Defaults to `true`: the plugin always\nattempts an exact alarm and silently falls back to an inexact one if the\nexact-alarm permission isn't granted (unless `isExactMandatory` is also\nset). Set to `false` to schedule this notification as inexact outright,\nregardless of permission state.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "isExactMandatory",
+          "tags": [
+            {
+              "text": "8.3.0",
+              "name": "since"
+            },
+            {
+              "text": "false",
+              "name": "default"
+            }
+          ],
+          "docs": "Whether an exact alarm is mandatory for this notification.\n\nOnly available for Android, and only meaningful when\n`isExactNotification` is `true` (the default). If the exact-alarm\npermission is denied and any notification being scheduled has this set\nto `true`, the whole `schedule()`/`update()` call is rejected instead of\nsilently falling back to an inexact alarm.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
         }
       ]
     },

@@ -9,6 +9,9 @@
     <button onclick="run('schedule',{notifications:[{id:2,title:'Exact',body:'Exact alarm',schedule:{at:new Date(Date.now()+15000)},badge:1}],exactAlarm:true})">schedule() exactAlarm:true (+15s)</button>
     <button onclick="run('update',{notifications:[{id:1,title:'Upd',body:'B2',schedule:{at:new Date(Date.now()+5000)}}]})">update()</button>
     <button onclick="run('schedule',{notifications:[{id:3,title:'Extra',body:'Has extra data',schedule:{at:new Date(Date.now()+5000)},extra:'Eheh'}]})">schedule() with extra:'Eheh' (+5s)</button>
+    <button onclick="run('schedule',{notifications:[{id:4,title:'Inexact',body:'isExactNotification:false',schedule:{at:new Date(Date.now()+10000)},isExactNotification:false}]})">schedule() isExactNotification:false (+10s)</button>
+    <button onclick="run('schedule',{notifications:[{id:5,title:'Mandatory',body:'isExactMandatory:true (revoke Alarms &amp; reminders first to see it reject)',schedule:{at:new Date(Date.now()+10000)},isExactMandatory:true}]})">schedule() isExactMandatory:true (+10s)</button>
+    <button onclick="run('schedule',{notifications:[{id:6,title:'Mandatory (batch A)',body:'isExactMandatory:true',schedule:{at:new Date(Date.now()+10000)},isExactMandatory:true},{id:7,title:'Non-mandatory (batch B)',body:'default flags',schedule:{at:new Date(Date.now()+10000)}}]})">schedule() batch: id6 mandatory + id7 default (+10s)</button>
     <button onclick="run('getAll',{})">getAll()</button>
     <button onclick="run('getByIds',{ids:[1]})">getByIds()</button>
     <button onclick="run('cancelAll')">cancelAll()</button>

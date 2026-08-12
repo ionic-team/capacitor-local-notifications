@@ -24,6 +24,10 @@ enum class LocalNotificationsError(val code: String, val message: String) {
     SCHEDULED_INEXACT(
         "OS-PLUG-LNOT-0018",
         "Unable to schedule an exact alarm due to lack of permissions. Scheduled as an inexact alarm instead."
+    ),
+    EXACT_ALARM_PERMISSION_REQUIRED(
+        "OS-PLUG-LNOT-0019",
+        "Unable to schedule an exact alarm due to lack of permissions."
     );
 
     fun reject(call: PluginCall) {

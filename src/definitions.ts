@@ -995,6 +995,34 @@ export interface LocalNotificationSchema {
    * @since 8.0.0
    */
   foreground?: boolean;
+
+  /**
+   * Whether this notification should be scheduled with an exact alarm.
+   *
+   * Only available for Android. Defaults to `true`: the plugin always
+   * attempts an exact alarm and silently falls back to an inexact one if the
+   * exact-alarm permission isn't granted (unless `isExactMandatory` is also
+   * set). Set to `false` to schedule this notification as inexact outright,
+   * regardless of permission state.
+   *
+   * @since 8.3.0
+   * @default true
+   */
+  isExactNotification?: boolean;
+
+  /**
+   * Whether an exact alarm is mandatory for this notification.
+   *
+   * Only available for Android, and only meaningful when
+   * `isExactNotification` is `true` (the default). If the exact-alarm
+   * permission is denied and any notification being scheduled has this set
+   * to `true`, the whole `schedule()`/`update()` call is rejected instead of
+   * silently falling back to an inexact alarm.
+   *
+   * @since 8.3.0
+   * @default false
+   */
+  isExactMandatory?: boolean;
 }
 
 /**

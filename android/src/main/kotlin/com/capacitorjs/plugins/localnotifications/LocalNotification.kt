@@ -40,6 +40,8 @@ class LocalNotification {
     var source: String? = null
     var badge: Int? = null
     var foreground: Boolean? = null
+    var isExactNotification: Boolean = true
+    var isExactMandatory: Boolean = false
 
     /**
      * Internal bookkeeping only — never sent to or read from JS. Set when
@@ -180,6 +182,8 @@ class LocalNotification {
             if (jsonObject.has("foreground")) {
                 n.foreground = jsonObject.getBoolean("foreground", false)
             }
+            n.isExactNotification = jsonObject.getBoolean("isExactNotification", true) ?: true
+            n.isExactMandatory = jsonObject.getBoolean("isExactMandatory", false) ?: false
             n.cancelled = jsonObject.getBoolean("cancelled", false) ?: false
 
             try {
@@ -241,6 +245,8 @@ class LocalNotification {
                 notification.sound?.let { jsNotification.put("sound", it) }
                 notification.badge?.let { jsNotification.put("badge", it) }
                 notification.foreground?.let { jsNotification.put("foreground", it) }
+                jsNotification.put("isExactNotification", notification.isExactNotification)
+                jsNotification.put("isExactMandatory", notification.isExactMandatory)
 
                 jsArray.put(jsNotification)
             }
