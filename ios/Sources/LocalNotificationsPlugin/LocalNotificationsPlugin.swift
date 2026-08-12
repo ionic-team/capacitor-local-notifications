@@ -881,9 +881,13 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
      */
     @objc func removeAllDeliveredNotifications(_ call: CAPPluginCall) {
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
-        DispatchQueue.main.async(execute: {
-            UIApplication.shared.applicationIconBadgeNumber = 0
-        })
+        if #available(iOS 16.0, *) {
+            UNUserNotificationCenter.current().setBadgeCount(0)
+        } else {
+            DispatchQueue.main.async {
+                UIApplication.shared.applicationIconBadgeNumber = 0
+            }
+        }
         call.resolve()
     }
 
