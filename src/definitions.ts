@@ -981,12 +981,15 @@ export interface LocalNotificationSchema {
   /**
    * Whether this notification should be scheduled with an exact alarm.
    *
-   * Only available for Android. Defaults to `true`: the plugin always
-   * attempts an exact alarm and falls back to an inexact one if the
-   * exact-alarm permission isn't granted (unless `isExactMandatory` is also
-   * set). On `schedule()`, a fallback like this sets `ScheduleResult.warning`;
-   * on `update()` it happens silently. Set to `false` to schedule this
-   * notification as inexact outright, regardless of permission state.
+   * Only available for Android. Defaults to `true`: on `schedule()` (API 31+),
+   * if the app isn't yet allowed to schedule exact alarms the system "Alarms &
+   * reminders" settings screen is opened so the user can grant it — regardless
+   * of `isExactMandatory`. If the user still declines, the notification falls
+   * back to an inexact alarm (unless `isExactMandatory` is also set, in which
+   * case the call is rejected instead); a fallback like this sets
+   * `ScheduleResult.warning`. `update()` never prompts and falls back silently.
+   * Set to `false` to schedule this notification as inexact outright,
+   * regardless of permission state.
    *
    * @since 8.3.0
    * @default true

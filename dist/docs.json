@@ -949,7 +949,7 @@
               "name": "default"
             }
           ],
-          "docs": "Whether this notification should be scheduled with an exact alarm.\n\nOnly available for Android. Defaults to `true`: the plugin always\nattempts an exact alarm and falls back to an inexact one if the\nexact-alarm permission isn't granted (unless `isExactMandatory` is also\nset). On `schedule()`, a fallback like this sets `ScheduleResult.warning`;\non `update()` it happens silently. Set to `false` to schedule this\nnotification as inexact outright, regardless of permission state.",
+          "docs": "Whether this notification should be scheduled with an exact alarm.\n\nOnly available for Android. Defaults to `true`: on `schedule()` (API 31+),\nif the app isn't yet allowed to schedule exact alarms the system \"Alarms &\nreminders\" settings screen is opened so the user can grant it — regardless\nof `isExactMandatory`. If the user still declines, the notification falls\nback to an inexact alarm (unless `isExactMandatory` is also set, in which\ncase the call is rejected instead); a fallback like this sets\n`ScheduleResult.warning`. `update()` never prompts and falls back silently.\nSet to `false` to schedule this notification as inexact outright,\nregardless of permission state.",
           "complexTypes": [],
           "type": "boolean | undefined"
         },
