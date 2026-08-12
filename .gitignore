@@ -1,7 +1,5 @@
 # node files
-# dist is committed on this feature branch so the plugin is consumable via git URL
-# (ODC/MABS installs from git, which does not build dist). Re-add `dist` here once
-# the plugin is published to npm.
+dist
 node_modules
 
 # iOS files
