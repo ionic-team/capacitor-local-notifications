@@ -102,6 +102,15 @@ class LocalNotificationsPlugin : Plugin() {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && getPermissionState(LOCAL_NOTIFICATIONS) != PermissionState.GRANTED
 
     private fun doSchedule(call: PluginCall, onlyExisting: Boolean) {
+        // Bail out before ever considering the exact-alarm prompt if notifications
+        // are disabled outright (e.g. POST_NOTIFICATIONS was just denied) — that
+        // permission is unusable regardless of exact-alarm state, so there's no
+        // point prompting for it first. manager.schedule() re-checks this anyway;
+        // this just avoids showing a moot prompt before an inevitable rejection.
+        if (!manager.areNotificationsEnabled()) {
+            LocalNotificationsError.NOTIFICATIONS_DISABLED.reject(call)
+            return
+        }
         // The exact-alarm prompt only applies to schedule (not update), and only
         // when any notification in this batch wants an exact alarm at all
         // (isExactNotification:true, the default) — independent of whether it's
