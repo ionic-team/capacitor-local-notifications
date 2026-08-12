@@ -32,6 +32,13 @@ class LocalNotificationRestoreReceiver : BroadcastReceiver() {
                     storage.deleteNotification(id)
                     continue
                 }
+                // Fired one-shot: kept in storage only for TRIGGERED queries — never
+                // re-arm it on boot, or it re-fires after every reboot. Same guard the
+                // migrator's reconcileOwnStorage already uses.
+                if (!schedule.isPerpetual() && notification.isTriggered()) {
+                    if (notification.cancelled) storage.deleteNotification(id)
+                    continue
+                }
                 val at = schedule.at
                 if (at != null && at.before(Date())) {
                     // Show notifications that would have been delivered while the device was off.
