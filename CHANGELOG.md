@@ -1,3 +1,10 @@
+# [8.3.0](https://github.com/ionic-team/capacitor-local-notifications/compare/v8.2.1...v8.3.0) (2026-08-14)
+
+
+### Features
+
+* new Local Notifications Capacitor plugin ([#1](https://github.com/ionic-team/capacitor-local-notifications/issues/1)) ([2bcb375](https://github.com/ionic-team/capacitor-local-notifications/commit/2bcb3757546d00fe2ccd1bf0f61a060eeb842880)), closes [#2](https://github.com/ionic-team/capacitor-local-notifications/issues/2)
+
 # Change Log
 
 All notable changes to this project will be documented in this file.
