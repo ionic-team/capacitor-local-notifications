@@ -91,7 +91,7 @@ If the device has entered [Doze](https://developer.android.com/training/monitori
 
 ## Errors
 
-Starting on verison 8.3.0, the plugin returns structured errors on Android and iOS. Each error has a `code` (e.g. `OS-PLUG-LNOT-0001`) and a `message` with a human-readable description. Codes 0001, 0002, 0005, 0006, 0011 and 0012 mean the same thing on both platforms; every other code is platform-specific.
+Starting on version 8.3.0, the plugin returns structured errors on Android and iOS. Each error has a `code` (e.g. `OS-PLUG-LNOT-0001`) and a `message` with a human-readable description. Codes 0001, 0002, 0005, 0006, 0011 and 0012 mean the same thing on both platforms; every other code is platform-specific.
 
 | Error code | Platform(s) | Description |
 |---|---|---|
