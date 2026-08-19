@@ -1,3 +1,10 @@
+## [8.3.1](https://github.com/ionic-team/capacitor-local-notifications/compare/v8.3.0...v8.3.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* **android:** License for Native Publishing ([#12](https://github.com/ionic-team/capacitor-local-notifications/issues/12)) ([b8ced9c](https://github.com/ionic-team/capacitor-local-notifications/commit/b8ced9c9dc8e576df8b39c702d354f202f1506bb))
+
 # [8.3.0](https://github.com/ionic-team/capacitor-local-notifications/compare/v8.2.1...v8.3.0) (2026-08-14)
 
 
