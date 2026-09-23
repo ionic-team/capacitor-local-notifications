@@ -2,11 +2,11 @@
   "name": "app-capacitor-local-notifications",
   "version": "1.0.0",
   "private": true,
-  "devDependencies": { "@capacitor/cli": "^9.0.0-alpha.6" },
+  "devDependencies": { "@capacitor/cli": "^9.0.0-alpha.7" },
   "dependencies": {
-    "@capacitor/core": "^9.0.0-alpha.6",
-    "@capacitor/ios": "^9.0.0-alpha.6",
-    "@capacitor/android": "^9.0.0-alpha.6",
+    "@capacitor/core": "^9.0.0-alpha.7",
+    "@capacitor/ios": "^9.0.0-alpha.7",
+    "@capacitor/android": "^9.0.0-alpha.7",
     "@capacitor/local-notifications": "file:.."
   }
 }
