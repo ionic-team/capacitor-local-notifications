@@ -16,7 +16,7 @@ let package = Package(
         .target(
             name: "LocalNotificationsPlugin",
             dependencies: [
-                .product(name: "Capacitor", package: "Capacitor"),
+                .product(name: "Capacitor", package: "capacitor"),
             ],
             path: "ios/Sources/LocalNotificationsPlugin"),
         .testTarget(
