@@ -2,7 +2,9 @@
   "name": "app-capacitor-local-notifications",
   "version": "1.0.0",
   "private": true,
-  "devDependencies": { "@capacitor/cli": "next" },
+  "devDependencies": {
+    "@capacitor/cli": "next"
+  },
   "dependencies": {
     "@capacitor/core": "next",
     "@capacitor/ios": "next",
