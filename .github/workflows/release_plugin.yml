@@ -1,9 +1,6 @@
 name: "Release Plugin"
 
 on:
-  push:
-    branches:
-      - development
   workflow_dispatch:
 
 permissions:
@@ -13,55 +10,26 @@ permissions:
     id-token: write # to enable use of OIDC for npm provenance and trusted publishing
 
 jobs:
-  setup:
-    uses: ./.github/workflows/reusable_setup.yml
-    secrets:
-      THE_GH_RELEASE_TOKEN: ${{ secrets.CAP_GH_RELEASE_TOKEN }}
-
   lint:
-    needs: 'setup'
-    uses: ./.github/workflows/reusable_lint.yml
-    secrets:
-      THE_GH_RELEASE_TOKEN: ${{ secrets.CAP_GH_RELEASE_TOKEN }}
+    uses: ionic-team/capacitor-actions/.github/workflows/reusable_lint.yml@ce76eaeebc6bb5bb0ddb2c88ada46f6d107a002d
 
-  build-packages:
-    needs: 'setup'
-    uses: ./.github/workflows/reusable_build.yml
-    secrets:
-      THE_GH_RELEASE_TOKEN: ${{ secrets.CAP_GH_RELEASE_TOKEN }}
+  build:
+    uses: ionic-team/capacitor-actions/.github/workflows/reusable_build.yml@ce76eaeebc6bb5bb0ddb2c88ada46f6d107a002d
 
   release:
-    needs: ['setup','lint','build-packages']
+    needs: ['lint','build']
     runs-on: 'ubuntu-latest'
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - name: 'Setup Environment'
+        id: setup
+        uses: ionic-team/capacitor-actions/setup-tools@0593e5113cff6305d18e218c9d6768fd010406b4
         with:
-          fetch-depth: 0
-          token: ${{ secrets.CAP_GH_RELEASE_TOKEN }}
-      - name: 'Setup Tools'
-        uses: ./.github/actions/setup-tools
+          working-directory: .
+          gh-token: ${{ github.token }}
       - name: Release
+        working-directory: .
         env:
           GITHUB_TOKEN: ${{ secrets.CAP_GH_RELEASE_TOKEN }}
           GH_TOKEN: ${{ secrets.CAP_GH_RELEASE_TOKEN }}
-        run: npx semantic-release
-
-  publish-android:
-    needs: ['release']
-    uses: ./.github/workflows/publish_android_maven_central.yml
-    secrets:
-      ANDROID_CENTRAL_USERNAME: ${{ secrets.ANDROID_CENTRAL_USERNAME }}
-      ANDROID_CENTRAL_PASSWORD: ${{ secrets.ANDROID_CENTRAL_PASSWORD }}
-      ANDROID_SIGNING_KEY_ID: ${{ secrets.ANDROID_SIGNING_KEY_ID }}
-      ANDROID_SIGNING_KEY: ${{ secrets.ANDROID_SIGNING_KEY }}
-      ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
-      ANDROID_SONATYPE_STAGING_PROFILE_ID: ${{ secrets.ANDROID_SONATYPE_STAGING_PROFILE_ID }}
-      CAP_GH_RELEASE_TOKEN: ${{ secrets.CAP_GH_RELEASE_TOKEN }}
-
-  publish-ios:
-    needs: ['release']
-    uses: ./.github/workflows/publish_ios_cocoapods_trunk.yml
-    secrets:
-      COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
-      CAP_GH_RELEASE_TOKEN: ${{ secrets.CAP_GH_RELEASE_TOKEN }}
+        run: npm publish --tag next --provenance
