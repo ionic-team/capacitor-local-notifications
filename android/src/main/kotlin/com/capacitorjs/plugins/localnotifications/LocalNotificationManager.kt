@@ -239,10 +239,11 @@ class LocalNotificationManager(
         val id = localNotification.id ?: return
         // Open intent
         val intent = buildIntent(localNotification, DEFAULT_PRESS_ACTION)
-        var flags = PendingIntent.FLAG_CANCEL_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = flags or PendingIntent.FLAG_MUTABLE
-        }
+        // Direct boot: before the first unlock the launcher activity does not
+        // resolve, so the intent counts as implicit and Android 14+ rejects a
+        // mutable PendingIntent — the boot receiver died on it. Nothing needs to
+        // mutate this intent; all extras are set here.
+        val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val pendingIntent = PendingIntent.getActivity(context, id, intent, flags)
         mBuilder.setContentIntent(pendingIntent)
 
@@ -276,10 +277,7 @@ class LocalNotificationManager(
         dismissIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         dismissIntent.putExtra(NOTIFICATION_INTENT_KEY, id)
         dismissIntent.putExtra(ACTION_INTENT_KEY, "dismiss")
-        var deleteFlags = 0
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            deleteFlags = PendingIntent.FLAG_MUTABLE
-        }
+        var deleteFlags = PendingIntent.FLAG_IMMUTABLE
         val deleteIntent = PendingIntent.getBroadcast(context, id, dismissIntent, deleteFlags)
         mBuilder.setDeleteIntent(deleteIntent)
     }
@@ -306,10 +304,9 @@ class LocalNotificationManager(
         val notificationIntent = Intent(context, TimedNotificationPublisher::class.java)
         notificationIntent.putExtra(NOTIFICATION_INTENT_KEY, requestId)
         notificationIntent.putExtra(TimedNotificationPublisher.NOTIFICATION_KEY, notification)
-        var flags = PendingIntent.FLAG_CANCEL_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = flags or PendingIntent.FLAG_MUTABLE
-        }
+        // Direct boot: this intent is explicit (our own receiver), so an immutable
+        // PendingIntent is safe and also keeps the alarm re-armable before unlock.
+        val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         var pendingIntent = PendingIntent.getBroadcast(context, requestId, notificationIntent, flags)
 
         val at = schedule.at
@@ -420,10 +417,9 @@ class LocalNotificationManager(
 
     private fun cancelTimerForNotification(notificationId: Int) {
         val intent = Intent(context, TimedNotificationPublisher::class.java)
-        var flags = PendingIntent.FLAG_NO_CREATE
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = flags or PendingIntent.FLAG_MUTABLE
-        }
+        // Must match the mutability used when the alarm was registered, otherwise
+        // the existing PendingIntent is not found.
+        val flags = PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         val pi = PendingIntent.getBroadcast(context, notificationId, intent, flags)
         if (pi != null) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager

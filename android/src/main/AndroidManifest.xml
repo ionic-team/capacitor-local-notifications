@@ -1,8 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <receiver android:name="com.capacitorjs.plugins.localnotifications.TimedNotificationPublisher" />
-        <receiver android:name="com.capacitorjs.plugins.localnotifications.NotificationDismissReceiver" />
+        <receiver
+            android:name="com.capacitorjs.plugins.localnotifications.TimedNotificationPublisher"
+            android:directBootAware="true" />
+        <receiver
+            android:name="com.capacitorjs.plugins.localnotifications.NotificationDismissReceiver"
+            android:directBootAware="true" />
         <receiver
             android:name="com.capacitorjs.plugins.localnotifications.LocalNotificationRestoreReceiver"
             android:directBootAware="true"

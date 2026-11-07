@@ -55,10 +55,9 @@ class TimedNotificationPublisher : BroadcastReceiver() {
 
         val trigger = date.nextTrigger(Date())
         val clone = intent.clone() as Intent
-        var flags = PendingIntent.FLAG_CANCEL_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = flags or PendingIntent.FLAG_MUTABLE
-        }
+        // Direct boot: re-arming from the publisher must work while the device is
+        // still locked, so keep the mutability in line with the manager's alarms.
+        val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val pendingIntent = PendingIntent.getBroadcast(context, id, clone, flags)
         val storedNotification = NotificationStorage(context).getSavedNotificationAsJSObject(id.toString())
         val wantsExact = storedNotification?.getBoolean("isExactNotification", true) ?: true

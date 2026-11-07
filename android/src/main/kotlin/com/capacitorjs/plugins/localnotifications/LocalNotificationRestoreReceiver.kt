@@ -3,17 +3,20 @@ package com.capacitorjs.plugins.localnotifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.UserManager
 import com.getcapacitor.CapConfig
 import java.util.Date
 
 class LocalNotificationRestoreReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val um = context.getSystemService(UserManager::class.java)
-        if (um == null || !um.isUserUnlocked) return
-
+        // Runs on LOCKED_BOOT_COMPLETED as well: the user may still be locked, and
+        // those are exactly the schedules that must not be lost. Reading the stores
+        // before unlock requires device-protected storage (see NotificationStorage);
+        // moving them does not, so the migration only runs on BOOT_COMPLETED.
         val storage = NotificationStorage(context)
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            storage.migrateToDeviceProtectedStorage()
+        }
         val ids = storage.getSavedNotificationIds()
 
         val notifications = ArrayList<LocalNotification>(ids.size)
@@ -58,6 +61,10 @@ class LocalNotificationRestoreReceiver : BroadcastReceiver() {
 
         val config = CapConfig.loadDefault(context)
         val localNotificationManager = LocalNotificationManager(storage, null, context, config)
+        // Before the first unlock the plugin has never run, so the default channel
+        // may not exist yet; on Android 8+ a notification without its channel is
+        // dropped. Creating it is idempotent.
+        localNotificationManager.createNotificationChannel()
         localNotificationManager.schedule(null, notifications)
     }
 }

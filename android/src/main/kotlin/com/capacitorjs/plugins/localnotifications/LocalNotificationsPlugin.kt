@@ -42,6 +42,9 @@ class LocalNotificationsPlugin : Plugin() {
     override fun load() {
         super.load()
         notificationStorage = NotificationStorage(context)
+        // Direct boot: move stores written by earlier versions out of
+        // credential-encrypted storage while the user is unlocked.
+        notificationStorage.migrateToDeviceProtectedStorage()
         manager = LocalNotificationManager(notificationStorage, activity, context, bridge.config)
         manager.createNotificationChannel()
         notificationChannelManager = NotificationChannelManager(activity)

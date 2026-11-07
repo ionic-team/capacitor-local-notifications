@@ -2,6 +2,7 @@ package com.capacitorjs.plugins.localnotifications
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import com.getcapacitor.JSObject
 import java.text.ParseException
 import org.json.JSONException
@@ -10,6 +11,19 @@ import org.json.JSONException
  * Abstracts storage for notification data (and action-type groups).
  */
 class NotificationStorage(private val context: Context) {
+
+    /**
+     * Direct boot: a schedule that comes due before the user unlocks the device
+     * must still be readable. Device-protected storage is app-private but not
+     * credential-encrypted, so the boot receiver can read it while the device is
+     * still locked.
+     */
+    private val storageContext: Context =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            context.createDeviceProtectedStorageContext() ?: context
+        } else {
+            context
+        }
 
     fun appendNotifications(localNotifications: List<LocalNotification>) {
         val editor = getStorage(NOTIFICATION_STORE_ID).edit()
@@ -94,8 +108,30 @@ class NotificationStorage(private val context: Context) {
         editor.apply()
     }
 
+    /**
+     * Moves stores written before direct boot support from credential-encrypted
+     * to device-protected storage. Only callable while the user is unlocked — the
+     * source is unreadable before that — so callers run it from the plugin's
+     * load() and from BOOT_COMPLETED, never from LOCKED_BOOT_COMPLETED. The
+     * marker lives in device-protected storage, so a second run cannot overwrite
+     * records written after the first one.
+     */
+    fun migrateToDeviceProtectedStorage() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
+        val target = context.createDeviceProtectedStorageContext() ?: return
+        if (target === context) return
+        val meta = target.getSharedPreferences(META_STORE_ID, Context.MODE_PRIVATE)
+        if (meta.getBoolean(MIGRATED_KEY, false)) return
+        target.moveSharedPreferencesFrom(context, NOTIFICATION_STORE_ID)
+        for (notification in getSavedNotifications()) {
+            val actionTypeId = notification.actionTypeId ?: continue
+            target.moveSharedPreferencesFrom(context, ACTION_TYPES_ID + actionTypeId)
+        }
+        meta.edit().putBoolean(MIGRATED_KEY, true).apply()
+    }
+
     private fun getStorage(key: String): SharedPreferences =
-        context.getSharedPreferences(key, Context.MODE_PRIVATE)
+        storageContext.getSharedPreferences(key, Context.MODE_PRIVATE)
 
     /**
      * Writes action types (actions shown in a notification) to storage,
@@ -134,5 +170,7 @@ class NotificationStorage(private val context: Context) {
     companion object {
         private const val NOTIFICATION_STORE_ID = "NOTIFICATION_STORE"
         private const val ACTION_TYPES_ID = "ACTION_TYPE_STORE"
+        private const val META_STORE_ID = "LOCAL_NOTIFICATIONS_META"
+        private const val MIGRATED_KEY = "deviceProtectedMigrationDone"
     }
 }
