@@ -94,6 +94,37 @@ class NotificationStorage(private val context: Context) {
         editor.apply()
     }
 
+    /**
+     * Record that a one-shot actually fired, together with the `at` it fired
+     * for. The boot receiver uses this to distinguish a fired notification
+     * (whose record stays in storage for getByIds()/getAll()) from one that
+     * came due while the device was off and still has to be delivered.
+     */
+    fun setFiredAt(id: String, atMillis: Long) {
+        val json = getSavedNotificationAsJSObject(id) ?: return
+        json.put("firedAt", atMillis)
+        val editor = getStorage(NOTIFICATION_STORE_ID).edit()
+        editor.putString(id, json.toString())
+        editor.apply()
+    }
+
+    /**
+     * First run of the version that records `firedAt`. Records scheduled before
+     * this instant carry no marker and are treated as fired instead of being
+     * replayed on the first boot after an upgrade.
+     */
+    fun getFiredAtEpoch(): Long {
+        val meta = getMetaStorage()
+        val stored = meta.getLong(FIRED_AT_EPOCH_KEY, 0L)
+        if (stored > 0L) return stored
+        val now = System.currentTimeMillis()
+        meta.edit().putLong(FIRED_AT_EPOCH_KEY, now).apply()
+        return now
+    }
+
+    private fun getMetaStorage(): SharedPreferences =
+        context.getSharedPreferences(META_STORE_ID, Context.MODE_PRIVATE)
+
     private fun getStorage(key: String): SharedPreferences =
         context.getSharedPreferences(key, Context.MODE_PRIVATE)
 
@@ -134,5 +165,7 @@ class NotificationStorage(private val context: Context) {
     companion object {
         private const val NOTIFICATION_STORE_ID = "NOTIFICATION_STORE"
         private const val ACTION_TYPES_ID = "ACTION_TYPE_STORE"
+        private const val META_STORE_ID = "LOCAL_NOTIFICATIONS_META"
+        private const val FIRED_AT_EPOCH_KEY = "firedAtEpoch"
     }
 }

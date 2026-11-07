@@ -52,6 +52,15 @@ class LocalNotification {
      */
     var cancelled: Boolean = false
 
+    /**
+     * Internal bookkeeping only — never sent to or read from JS. Set by
+     * TimedNotificationPublisher when the notification actually fires (value:
+     * the `at` it fired for), so the boot receiver can tell a fired one-shot
+     * from one that came due while the device was off. See
+     * NotificationRestorePolicy.
+     */
+    var firedAt: Long? = null
+
     // Icons are stored as their bare resource base name.
     var smallIcon: String? = null
         set(value) {
@@ -185,6 +194,9 @@ class LocalNotification {
             n.isExactNotification = jsonObject.getBoolean("isExactNotification", true) ?: true
             n.isExactMandatory = jsonObject.getBoolean("isExactMandatory", false) ?: false
             n.cancelled = jsonObject.getBoolean("cancelled", false) ?: false
+            if (jsonObject.has("firedAt")) {
+                n.firedAt = jsonObject.getLong("firedAt")
+            }
 
             try {
                 val inboxList = jsonObject.getJSONArray("inboxList")

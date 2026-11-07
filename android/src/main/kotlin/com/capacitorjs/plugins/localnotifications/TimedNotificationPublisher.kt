@@ -39,12 +39,25 @@ class TimedNotificationPublisher : BroadcastReceiver() {
         val notificationJson = storage.getSavedNotificationAsJSObject(id.toString())
         LocalNotificationsPlugin.fireReceived(notificationJson)
         notificationManager.notify(id, notification)
+        recordFire(storage, id)
         rescheduleNotificationIfNeeded(context, intent, id)
         // The notification's record stays in storage after firing (matching the
         // legacy plugin) so a triggered notification's full data — sound, extra,
         // badge, at — remains queryable via getByIds()/getAll(). It's removed only
         // by an explicit cancel/clear call, or by the user dismissing it from the
         // shade (NotificationDismissReceiver).
+    }
+
+    /**
+     * Persist that this one-shot actually fired, so the boot receiver does not
+     * mistake it for one that came due while the device was off.
+     */
+    private fun recordFire(storage: NotificationStorage, id: Int) {
+        val stored = storage.getSavedNotification(id.toString()) ?: return
+        val schedule = stored.schedule ?: return
+        if (schedule.isPerpetual()) return
+        val at = schedule.at ?: return
+        storage.setFiredAt(id.toString(), at.time)
     }
 
     private fun rescheduleNotificationIfNeeded(context: Context, intent: Intent, id: Int): Boolean {

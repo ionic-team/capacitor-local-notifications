@@ -42,6 +42,12 @@ class LocalNotificationsPlugin : Plugin() {
     override fun load() {
         super.load()
         notificationStorage = NotificationStorage(context)
+        // First app start of this version: records stored before this instant carry
+        // no `firedAt` and cannot be told apart from missed ones, so they must not
+        // be replayed on the next boot. Doing this here — not only in the receiver —
+        // also covers notifications scheduled after the update but before the first
+        // reboot, which would otherwise fall behind the epoch and be dropped.
+        notificationStorage.getFiredAtEpoch()
         manager = LocalNotificationManager(notificationStorage, activity, context, bridge.config)
         manager.createNotificationChannel()
         notificationChannelManager = NotificationChannelManager(activity)

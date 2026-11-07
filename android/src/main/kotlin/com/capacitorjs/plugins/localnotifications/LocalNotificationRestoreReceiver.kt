@@ -15,6 +15,7 @@ class LocalNotificationRestoreReceiver : BroadcastReceiver() {
 
         val storage = NotificationStorage(context)
         val ids = storage.getSavedNotificationIds()
+        val firedAtEpoch = storage.getFiredAtEpoch()
 
         val notifications = ArrayList<LocalNotification>(ids.size)
         val updatedNotifications = ArrayList<LocalNotification>()
@@ -36,13 +37,29 @@ class LocalNotificationRestoreReceiver : BroadcastReceiver() {
                 // re-arm it on boot, or it re-fires after every reboot. Same guard the
                 // migrator's reconcileOwnStorage already uses.
                 if (!schedule.isPerpetual() && notification.isTriggered()) {
-                    if (notification.cancelled) storage.deleteNotification(id)
-                    continue
+                    if (notification.cancelled) {
+                        storage.deleteNotification(id)
+                        continue
+                    }
+                    // A one-shot that fired keeps its record for getByIds()/getAll(),
+                    // so being in the past is not enough to skip it: only a shot that
+                    // came due while the device was off is still missing its delivery.
+                    val scheduledAt = schedule.at
+                    if (scheduledAt == null ||
+                        !NotificationRestorePolicy.shouldCatchUp(
+                            Date().time,
+                            scheduledAt.time,
+                            notification.firedAt,
+                            firedAtEpoch
+                        )
+                    ) {
+                        continue
+                    }
                 }
                 val at = schedule.at
                 if (at != null && at.before(Date())) {
                     // Show notifications that would have been delivered while the device was off.
-                    val newDateTime = Date().time + 15 * 1000
+                    val newDateTime = Date().time + NotificationRestorePolicy.CATCH_UP_DELAY_MS
                     schedule.at = Date(newDateTime)
                     notification.schedule = schedule
                     updatedNotifications.add(notification)
