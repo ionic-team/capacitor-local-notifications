@@ -11,7 +11,7 @@ runs:
     - name: Install dependencies
       shell: bash
       run: npm i
-    - name: Set Xcode 26.0  
+    - name: Set Xcode Version  
       if: runner.os == 'macOS'
       shell: bash
-      run: sudo xcode-select --switch /Applications/Xcode_26.0.app && xcrun simctl list > /dev/null && xcodebuild -downloadPlatform iOS
+      run: sudo xcode-select --switch /Applications/Xcode_27.0.app && xcrun simctl list > /dev/null && xcodebuild -downloadPlatform iOS
