@@ -14,4 +14,4 @@ runs:
     - name: Set Xcode 26.0  
       if: runner.os == 'macOS'
       shell: bash
-      run: sudo xcode-select --switch /Applications/Xcode_26.0.app && xcrun simctl list > /dev/null && xcodebuild -downloadPlatform iOS
+      run: sudo xcode-select --switch /Applications/Xcode_27.0.app && xcrun simctl list > /dev/null && xcodebuild -downloadPlatform iOS
