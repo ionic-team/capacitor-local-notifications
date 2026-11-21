@@ -35,6 +35,26 @@ declare module '@capacitor/cli' {
       iconColor?: string;
 
       /**
+       * The action type whose buttons should be handled by `nativeActionReceiver`
+       * instead of opening the app and emitting a JavaScript action event.
+       * Other action types and notification content taps are unaffected.
+       *
+       * Only available for Android.
+       */
+      nativeActionTypeId?: string;
+
+      /**
+       * The fully qualified class name of an app-owned BroadcastReceiver for
+       * `nativeActionTypeId`. The receiver must be declared in AndroidManifest.xml.
+       * It receives the notification ID, action ID and original notification
+       * payload using LocalNotificationManager's notification intent keys.
+       * Handling runs natively; this does not start a JavaScript runtime.
+       *
+       * Only available for Android.
+       */
+      nativeActionReceiver?: string;
+
+      /**
        * Set the default notification sound for notifications.
        *
        * On Android 8+ it sets the default channel sound and can't be

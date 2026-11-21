@@ -249,15 +249,26 @@ class LocalNotificationManager(
         // Build action types
         val actionTypeId = localNotification.actionTypeId
         if (actionTypeId != null) {
+            val nativeActionReceiver = config.getString("nativeActionReceiver")
+                ?.takeIf { it.isNotBlank() && actionTypeId == config.getString("nativeActionTypeId") }
             val actionGroup = storage.getActionGroup(actionTypeId)
             for (notificationAction in actionGroup) {
                 val actionIntent = buildIntent(localNotification, notificationAction.id)
-                val actionPendingIntent = PendingIntent.getActivity(
-                    context,
-                    id + (notificationAction.id?.hashCode() ?: 0),
-                    actionIntent,
-                    flags
-                )
+                val requestCode = id + (notificationAction.id?.hashCode() ?: 0)
+                val actionPendingIntent = if (nativeActionReceiver != null) {
+                    val broadcastIntent = Intent()
+                        .setClassName(context.packageName, nativeActionReceiver)
+                        .setAction("${context.packageName}.localnotifications.$id.${notificationAction.id}")
+                        .putExtras(actionIntent)
+                    val broadcastFlags = PendingIntent.FLAG_UPDATE_CURRENT or when {
+                        !notificationAction.isInput() -> PendingIntent.FLAG_IMMUTABLE
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> PendingIntent.FLAG_MUTABLE
+                        else -> 0
+                    }
+                    PendingIntent.getBroadcast(context, requestCode, broadcastIntent, broadcastFlags)
+                } else {
+                    PendingIntent.getActivity(context, requestCode, actionIntent, flags)
+                }
                 val actionBuilder = NotificationCompat.Action.Builder(
                     R.drawable.ic_transparent,
                     notificationAction.title,
